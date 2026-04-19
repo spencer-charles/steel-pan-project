@@ -86,57 +86,109 @@ export function MatrixSection({
           </div>
         ) : filterPerfId && !filterSongId ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {members
-              .filter(m => availabilityMap?.[m.id] === 'available')
-              .map(member => {
-                const selectedPerf = performances.find(p => p.id === filterPerfId);
-                const setlist = selectedPerf?.setlist || [];
+            {(() => {
+              const selectedPerf = performances.find(p => p.id === filterPerfId);
+              const setlist = selectedPerf?.setlist || [];
+              
+              // Calculate coverage for each song in the setlist
+              const songCoverage = setlist.map(songId => {
+                const song = songs.find(s => s.id === songId);
+                const songAssignments = [...assignments, ...defaultAssignments].filter(a => a.songId === songId);
                 
-                // Use both gig-specific and default assignments for the overview
-                const memberAssignments = [...assignments, ...defaultAssignments]
-                  .filter(a => a.memberId === member.id && setlist.includes(a.songId));
+                // Group by instrument to see what's required vs available
+                const instrumentRequirement = new Set(songAssignments.map(a => a.instrument));
+                const instrumentAvailability = new Set(
+                  songAssignments
+                    .filter(a => availabilityMap?.[a.memberId] === 'available')
+                    .map(a => a.instrument)
+                );
                 
-                // Deduplicate by song and instrument
-                const seen = new Set();
-                const uniqueAssignments = memberAssignments.filter(a => {
-                  const key = `${a.songId}-${a.instrument}`;
-                  if (seen.has(key)) return false;
-                  seen.add(key);
-                  return true;
-                });
+                const missing = Array.from(instrumentRequirement).filter(inst => !instrumentAvailability.has(inst));
+                const coverage = instrumentRequirement.size > 0 
+                  ? (instrumentAvailability.size / instrumentRequirement.size) 
+                  : 0;
+                
+                return {
+                  id: songId,
+                  title: song?.title || "Unknown Song",
+                  coverage,
+                  missing,
+                  requirementCount: instrumentRequirement.size,
+                  availableCount: instrumentAvailability.size
+                };
+              });
 
-                const memberSongs = uniqueAssignments.map(a => {
-                  const song = songs.find(s => s.id === a.songId);
-                  return { title: song?.title || "Unknown", instrument: a.instrument };
-                });
+              // Sort by coverage descending, then by title
+              const sortedSongs = [...songCoverage].sort((a, b) => {
+                if (b.coverage !== a.coverage) return b.coverage - a.coverage;
+                return a.title.localeCompare(b.title);
+              });
 
-                return (
-                  <div key={member.id} className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm transition-all hover:shadow-md flex flex-col gap-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                      <span className="font-bold text-sm text-slate-800">{member.name}</span>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-1.5">
-                      {memberSongs.map((ms, i) => (
-                        <span 
-                          key={i} 
-                          className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-green-50 text-green-600 border border-green-100"
-                        >
-                          {ms.title} <span className="opacity-60 font-medium">({ms.instrument})</span>
+              return sortedSongs.map(sc => (
+                <div 
+                  key={sc.id} 
+                  onClick={() => setFilterSongId(sc.id)}
+                  className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm transition-all hover:shadow-md cursor-pointer flex flex-col gap-4 group"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-sm text-slate-800 truncate">{sc.title}</h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex-1 h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
+                          <div 
+                            className={cn(
+                              "h-full transition-all duration-500",
+                              sc.coverage === 1 ? "bg-green-500" : sc.coverage > 0.5 ? "bg-amber-500" : "bg-red-500"
+                            )}
+                            style={{ width: `${sc.coverage * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400">
+                          {Math.round(sc.coverage * 100)}%
                         </span>
-                      ))}
-                      {memberSongs.length === 0 && (
-                        <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">No songs assigned</span>
+                      </div>
+                    </div>
+                    <span className="material-symbols-outlined text-slate-300 group-hover:text-blue-500 transition-colors">chevron_right</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Status</span>
+                      <span className="text-[9px] font-bold text-slate-500">
+                        {sc.availableCount}/{sc.requirementCount} Sections Covered
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {sc.missing.length > 0 ? (
+                        <>
+                          <div className="w-full text-[8px] font-bold text-red-400 uppercase tracking-tighter mb-0.5">Missing:</div>
+                          {sc.missing.map((inst, i) => (
+                            <span 
+                              key={i} 
+                              className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-red-50 text-red-500 border border-red-100"
+                            >
+                              {inst}
+                            </span>
+                          ))}
+                        </>
+                      ) : sc.requirementCount > 0 ? (
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-green-50 text-green-600 border border-green-100 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[10px]">check_circle</span>
+                          Full Coverage
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold text-slate-300 italic uppercase tracking-widest">No mapping yet</span>
                       )}
                     </div>
                   </div>
-                );
-              })}
-            {members.filter(m => availabilityMap?.[m.id] === 'available').length === 0 && (
+                </div>
+              ));
+            })()}
+            {performances.find(p => p.id === filterPerfId)?.setlist.length === 0 && (
               <div className="col-span-full py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-50 rounded-3xl text-slate-300">
-                <span className="material-symbols-outlined text-4xl mb-2">person_off</span>
-                <p className="font-bold text-sm uppercase tracking-wider">No Players Available</p>
+                <span className="material-symbols-outlined text-4xl mb-2">queue_music</span>
+                <p className="font-bold text-sm uppercase tracking-wider">Empty Setlist</p>
               </div>
             )}
           </div>
