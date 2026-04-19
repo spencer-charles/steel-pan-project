@@ -30,7 +30,7 @@ const NAV_ITEMS = [
   { id: "dashboard",    label: "Dashboard",       icon: Home },
   { id: "personnel",    label: "Personnel",       icon: Users },
   { id: "repertoire",   label: "Repertoire",      icon: Music },
-  { id: "performances", label: "Performances",    icon: CalendarDays },
+  { id: "performances", label: "Gigs",            icon: CalendarDays },
   { id: "matrix",       label: "Matrix",          icon: Grid3X3 },
 ] as const;
 

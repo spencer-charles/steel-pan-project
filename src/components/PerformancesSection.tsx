@@ -41,9 +41,9 @@ export function PerformancesSection({
     try {
       await addPerformance({ title, date, location: "", status: "pending", setlist: [] });
       setTitle(""); setDate(""); setShowAdd(false);
-      showToast(`Performance "${title}" scheduled`);
+      showToast(`Gig "${title}" scheduled`);
     } catch (e) {
-      showToast("Failed to schedule performance", "error");
+      showToast("Failed to schedule gig", "error");
     }
   };
 
@@ -76,7 +76,7 @@ export function PerformancesSection({
             className="overflow-hidden"
           >
             <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-black/5 space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-primary px-1">New Performance Details</h3>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-primary px-1">New Gig Details</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input 
                   placeholder="Event Name" 
@@ -92,7 +92,7 @@ export function PerformancesSection({
                 />
               </div>
               <button onClick={handleAdd} className="w-full h-11 bg-primary-gradient text-white rounded-lg text-sm font-bold active:scale-95 transition-transform">
-                Save Performance
+                Save Gig
               </button>
             </div>
           </motion.div>
@@ -109,9 +109,9 @@ export function PerformancesSection({
             members={members}
             availabilityMap={availabilityMap}
             onDelete={() => {
-              if (confirm("Delete this performance?")) {
+              if (confirm("Delete this gig?")) {
                 deletePerformance(perf.id);
-                showToast(`Performance deleted`, "info");
+                showToast(`Gig deleted`, "info");
               }
             }}
             onUpdate={(updates) => updatePerformance(perf.id, updates)}

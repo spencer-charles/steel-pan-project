@@ -30,6 +30,7 @@ export default function Home() {
   const [filterSongId, setFilterSongId] = useState("");
 
   const { assignments, assignMember, removeAssignment } = useAssignments(filterPerfId);
+  const { assignments: defaultAssignments } = useAssignments("default_coverage");
   const { availability, updateAvailability } = useAvailability(filterPerfId);
 
   // Even if auth is loading, we can show the app since we're allowing public access
@@ -54,6 +55,7 @@ export default function Home() {
             setFilterSongId={setFilterSongId}
             onTabChange={setActiveTab}
             assignments={assignments}
+            defaultAssignments={defaultAssignments}
             removeAssignment={removeAssignment}
           />
         );
@@ -82,6 +84,7 @@ export default function Home() {
             songs={songs}
             performances={performances}
             assignments={assignments}
+            defaultAssignments={defaultAssignments}
             availabilityMap={availability}
             filterPerfId={filterPerfId}
             setFilterPerfId={setFilterPerfId}
@@ -106,6 +109,7 @@ export default function Home() {
             setFilterSongId={setFilterSongId}
             onTabChange={setActiveTab}
             assignments={assignments}
+            defaultAssignments={defaultAssignments}
             removeAssignment={removeAssignment}
           />
         );
