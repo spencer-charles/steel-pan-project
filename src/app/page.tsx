@@ -93,7 +93,6 @@ export default function Home() {
             filterSongId={filterSongId}
             setFilterSongId={setFilterSongId}
             removeAssignment={removeAssignment}
-            allAvailability={allAvailability}
           />
         );
       default:

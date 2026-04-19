@@ -13,5 +13,8 @@
         "supportEmail": "spencercharles11@gmail.com"
       }
     }
+  },
+  "hosting": {
+    "source": "."
   }
 }

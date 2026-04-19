@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-export type AvailabilityStatus = "available" | "unavailable";
+export type AvailabilityStatus = "available" | "unavailable" | "pending";
 
 export interface Availability {
   id: string;
@@ -47,7 +47,7 @@ export function useAvailability(performanceId?: string) {
   // Derived filtered availability for compatibility
   const availability = performanceId ? (allAvailability[performanceId] || {}) : {};
 
-  const updateAvailability = async (memberId: string, status: AvailabilityStatus, targetPerfId?: string) => {
+  const updateAvailability = async (memberId: string, status: AvailabilityStatus, targetPerfId: string) => {
     const perfId = targetPerfId || performanceId;
     if (!perfId) return;
     const id = `${perfId}_${memberId}`;
