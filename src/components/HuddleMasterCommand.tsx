@@ -45,8 +45,8 @@ export function HuddleMasterCommand({
   const { showToast } = useToast();
   
   // State for Availability Update form
-  const [selectedMemberId, setSelectedMemberId] = useState(members[0]?.id || "");
-  const [selectedPerfId, setSelectedPerfId] = useState(performances[0]?.id || "");
+  const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [selectedPerfId, setSelectedPerfId] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<AvailabilityStatus>("available");
 
   const handleUpdateAvailability = async () => {
@@ -117,7 +117,7 @@ export function HuddleMasterCommand({
                 onChange={(e) => setSelectedMemberId(e.target.value)}
                 className="w-full bg-surface-container-low border-none rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/40 appearance-none text-on-surface font-medium"
               >
-                <option value="" disabled>Choose a player...</option>
+                <option value="">Choose a player...</option>
                 {members.map(m => (
                     <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
@@ -130,7 +130,7 @@ export function HuddleMasterCommand({
                 onChange={(e) => setSelectedPerfId(e.target.value)}
                 className="w-full bg-surface-container-low border-none rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/40 appearance-none text-on-surface font-medium"
               >
-                <option value="" disabled>Choose a performance...</option>
+                <option value="">Choose a performance...</option>
                 {performances.map(p => (
                     <option key={p.id} value={p.id}>{p.title || p.date?.toString()}</option>
                 ))}
@@ -178,7 +178,7 @@ export function HuddleMasterCommand({
               onChange={(e) => setFilterPerfId(e.target.value)}
               className="w-full bg-surface-container-low border-none rounded-lg py-3 pl-12 pr-10 focus:ring-2 focus:ring-primary/40 text-sm appearance-none outline-none font-medium text-on-surface" 
             >
-              <option value="">Full Band</option>
+              <option value="">Choose a performance...</option>
               {performances.map(p => (
                 <option key={p.id} value={p.id}>{p.title || p.date?.toString()}</option>
               ))}
@@ -192,7 +192,7 @@ export function HuddleMasterCommand({
               onChange={(e) => setFilterSongId(e.target.value)}
               className="w-full bg-surface-container-low border-none rounded-lg py-3 pl-12 pr-10 focus:ring-2 focus:ring-primary/40 text-sm appearance-none outline-none font-medium text-on-surface" 
             >
-              <option value="">All Music</option>
+              <option value="">Choose a song...</option>
               {songs.map(s => (
                 <option key={s.id} value={s.id}>{s.title}</option>
               ))}

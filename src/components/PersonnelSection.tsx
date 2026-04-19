@@ -55,7 +55,7 @@ export function PersonnelSection({ members, addMember, deleteMember }: Personnel
       <section className="mt-4">
         <span className="font-headline text-sm tracking-widest uppercase font-bold text-primary mb-1 block">Management</span>
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-headline font-extrabold tracking-tight text-on-surface">Band Personnel</h1>
+            <h1 className="text-3xl font-headline font-extrabold tracking-tight text-on-surface">Players</h1>
             <button
                 onClick={() => setShowAdd(!showAdd)}
                 className={cn(

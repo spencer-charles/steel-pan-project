@@ -49,7 +49,7 @@ export function MatrixSection({
               onChange={e => setFilterPerfId(e.target.value)}
               className="w-full h-11 bg-slate-100 border-none rounded-2xl text-[11px] font-bold text-slate-700 px-4 appearance-none outline-none focus:ring-2 focus:ring-blue-500/20"
             >
-              <option value="">Full Band</option>
+              <option value="">Choose a performance...</option>
               {performances.map((perf) => (
                 <option key={perf.id} value={perf.id}>{perf.title}</option>
               ))}
@@ -66,7 +66,7 @@ export function MatrixSection({
               onChange={e => setFilterSongId(e.target.value)}
               className="w-full h-11 bg-slate-100 border-none rounded-2xl text-[11px] font-bold text-slate-700 px-4 appearance-none outline-none focus:ring-2 focus:ring-blue-500/20"
             >
-              <option value="">All Music</option>
+              <option value="">Choose a song...</option>
               {songs.map((song) => (
                 <option key={song.id} value={song.id}>{song.title}</option>
               ))}

@@ -211,7 +211,7 @@ export function RepertoireSection({ songs, members, addSong, deleteSong }: Reper
                                                     }}
                                                     value=""
                                                 >
-                                                    <option value="">+ Assign Player</option>
+                                                    <option value="">Choose a player...</option>
                                                     {members
                                                         .filter(m => !instAssignments.some(ia => ia.memberId === m.id))
                                                         .map(m => (
