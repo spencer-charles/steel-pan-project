@@ -48,20 +48,22 @@ export function RepertoireSection({ songs, members, addSong, deleteSong }: Reper
   return (
     <div className="space-y-6">
       {/* Header & Search */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-headline font-extrabold tracking-tight text-on-surface">Repertoire</h1>
-          <button 
-            onClick={() => setShowAdd(!showAdd)}
-            className={cn(
-                "flex items-center gap-2 px-6 py-4 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-sm border border-black/5",
-                showAdd ? "bg-surface-container-high text-on-surface" : "bg-primary-gradient text-white"
-            )}
-          >
-            <span className="material-symbols-outlined text-sm">{showAdd ? "close" : "add"}</span>
-            {showAdd ? "Cancel" : "Add Song"}
-          </button>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-headline font-black tracking-tight text-on-surface">Songs</h1>
+          <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-[0.2em]">Arrangements & Coverage</p>
         </div>
+        <button 
+          onClick={() => setShowAdd(!showAdd)}
+          className={cn(
+              "flex items-center gap-2 px-6 py-4 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-sm border border-black/5",
+              showAdd ? "bg-surface-container-high text-on-surface" : "bg-primary-gradient text-white"
+          )}
+        >
+          <span className="material-symbols-outlined text-sm">{showAdd ? "close" : "add"}</span>
+          {showAdd ? "Cancel" : "Add Song"}
+        </button>
+      </div>
 
         <div className="relative group">
           <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-primary transition-colors">music_note</span>
@@ -72,7 +74,6 @@ export function RepertoireSection({ songs, members, addSong, deleteSong }: Reper
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-      </div>
 
       {/* Add Form */}
       <AnimatePresence>

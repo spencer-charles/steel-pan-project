@@ -15,17 +15,9 @@ export function HuddleLayout({ children, activeTab, onTabChange, userInitials }:
   return (
     <div className="bg-surface text-on-surface min-h-screen pb-24">
       {/* TopAppBar */}
-      <header className="fixed top-0 w-full z-50 bg-zinc-50/80 backdrop-blur-xl dark:bg-zinc-950/80 shadow-[0_10px_30px_rgba(0,0,0,0.03)] flex justify-between items-center px-6 py-4">
+      <header className="fixed top-0 w-full z-50 bg-zinc-50/80 backdrop-blur-xl dark:bg-zinc-950/80 shadow-[0_10px_30px_rgba(0,0,0,0.03)] flex justify-center items-center px-6 py-4">
         <div className="flex items-center gap-3">
-          <span className="font-headline text-lg tracking-tighter font-extrabold text-zinc-900 dark:text-zinc-50">Huddle</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="text-zinc-400 hover:opacity-80 transition-opacity">
-            <span className="material-symbols-outlined">notifications</span>
-          </button>
-          <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white font-bold text-xs">
-            {userInitials}
-          </div>
+          <span className="font-headline text-lg tracking-tighter font-extrabold text-zinc-900 dark:text-zinc-50">Seattle Steel Pan Project</span>
         </div>
       </header>
 
@@ -43,7 +35,7 @@ export function HuddleLayout({ children, activeTab, onTabChange, userInitials }:
             activeTab === "master" ? "text-primary font-bold" : "text-zinc-400"
           )}
         >
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: ` 'FILL' ${activeTab === "master" ? 1 : 0}` }}>home</span>
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: ` 'FILL' ${activeTab === "master" ? 1 : 0}` }}>grid_view</span>
           <span className="font-body text-[10px] font-medium tracking-wide">Home</span>
         </button>
 
@@ -79,7 +71,7 @@ export function HuddleLayout({ children, activeTab, onTabChange, userInitials }:
             activeTab === "performances" ? "text-primary font-bold" : "text-zinc-400"
           )}
         >
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: ` 'FILL' ${activeTab === "performances" ? 1 : 0}` }}>theater_comedy</span>
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: ` 'FILL' ${activeTab === "performances" ? 1 : 0}` }}>event</span>
           <span className="font-body text-[10px] font-medium tracking-wide">Gigs</span>
         </button>
 
@@ -91,7 +83,7 @@ export function HuddleLayout({ children, activeTab, onTabChange, userInitials }:
             activeTab === "matrix" ? "text-primary font-bold" : "text-zinc-400"
           )}
         >
-          <span className="material-symbols-outlined" style={{ fontVariationSettings: ` 'FILL' ${activeTab === "matrix" ? 1 : 0}` }}>grid_view</span>
+          <span className="material-symbols-outlined" style={{ fontVariationSettings: ` 'FILL' ${activeTab === "matrix" ? 1 : 0}` }}>analytics</span>
           <span className="font-body text-[10px] font-medium tracking-wide">Matrix</span>
         </button>
       </nav>

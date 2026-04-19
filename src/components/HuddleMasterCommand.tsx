@@ -73,8 +73,10 @@ export function HuddleMasterCommand({
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Management Console Header */}
       <section className="mt-4 mb-8">
-        <span className="font-headline text-sm tracking-widest uppercase font-bold text-primary mb-1 block">Overview</span>
-        <h1 className="text-3xl font-headline font-extrabold tracking-tight text-on-surface">Management Console</h1>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-headline font-black tracking-tight text-on-surface">Dashboard</h1>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Management Overview</p>
+        </div>
       </section>
 
       {/* Quick Actions Horizontal Scroll */}

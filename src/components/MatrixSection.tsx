@@ -37,9 +37,9 @@ export function MatrixSection({
 }: MatrixSectionProps) {
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-xl font-bold text-slate-900">Operational Matrix</h2>
-        <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Coverage & Availability</p>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-3xl font-headline font-black tracking-tight text-on-surface">Matrix</h1>
+        <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-[0.2em]">Live Readiness Report</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
