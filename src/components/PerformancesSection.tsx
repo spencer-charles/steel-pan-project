@@ -147,7 +147,21 @@ function PerformanceCard({
   onUpdate: (u: Partial<Performance>) => void
 }) {
   const [showSetlist, setShowSetlist] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(perf.title);
+  const [editDate, setEditDate] = useState(perf.date);
+  const [editLocation, setEditLocation] = useState(perf.location || "");
   const { showToast } = useToast();
+
+  const handleSave = () => {
+    onUpdate({ 
+      title: editTitle, 
+      date: editDate, 
+      location: editLocation 
+    });
+    setIsEditing(false);
+    showToast("Gig details updated");
+  };
 
   // Robust date parsing for local time display
   let month = "ERR";
@@ -172,39 +186,95 @@ function PerformanceCard({
 
   return (
     <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-black/5 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-surface-container-high flex flex-col items-center justify-center text-on-surface shrink-0 border border-black/5">
-            <span className="text-[10px] font-bold uppercase opacity-60 leading-none">{month}</span>
-            <span className="text-lg font-black leading-none mt-0.5">{day}</span>
-          </div>
-          <div>
-            <h4 className="font-bold text-sm text-on-surface leading-tight">{perf.title}</h4>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className={cn(
-                "text-[9px] font-bold px-1.5 py-0.5 rounded-lg",
-                perf.status === "confirmed" ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"
-              )}>
-                {perf.status === "confirmed" ? "Confirmed" : "Tentative"}
-              </span>
-              <p className="text-[10px] text-slate-400 font-semibold">{perf.setlist.length} Songs</p>
+      <div className="flex items-start gap-3">
+        {/* Date Box */}
+        <div className="w-12 h-12 rounded-xl bg-surface-container-high flex flex-col items-center justify-center text-on-surface shrink-0 border border-black/5 mt-0.5">
+          <span className="text-[10px] font-bold uppercase opacity-60 leading-none">{month}</span>
+          <span className="text-lg font-black leading-none mt-0.5">{day}</span>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 min-w-0 pt-0.5">
+          {isEditing ? (
+            <div className="space-y-2 mb-2">
+              <input 
+                value={editTitle}
+                onChange={e => setEditTitle(e.target.value)}
+                className="w-full text-sm font-bold bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none ring-primary/20 focus:ring-2"
+                placeholder="Gig Name"
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input 
+                  type="date"
+                  value={editDate}
+                  onChange={e => setEditDate(e.target.value)}
+                  className="w-full text-[10px] bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none text-slate-500"
+                />
+                <input 
+                  value={editLocation}
+                  onChange={e => setEditLocation(e.target.value)}
+                  className="w-full text-[10px] bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none text-slate-500"
+                  placeholder="Location"
+                />
+              </div>
             </div>
+          ) : (
+            <div className="mb-1">
+              <h4 className="font-bold text-sm text-on-surface leading-tight truncate">{perf.title}</h4>
+              <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">{perf.location || "Location TBD"}</p>
+            </div>
+          )}
+          
+          <div className="flex items-center gap-2">
+            <span className={cn(
+              "text-[9px] font-bold px-1.5 py-0.5 rounded-lg",
+              perf.status === "confirmed" ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"
+            )}>
+              {perf.status === "confirmed" ? "Confirmed" : "Tentative"}
+            </span>
+            <p className="text-[10px] text-slate-400 font-semibold">{perf.setlist.length} Songs</p>
           </div>
         </div>
-        
-        <div className="flex items-center gap-1">
-            <button 
-              onClick={() => setShowSetlist(!showSetlist)}
-              className={cn(
-                 "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
-                 showSetlist ? "bg-surface-container-high text-on-surface" : "text-zinc-400 hover:bg-surface-container-low"
-              )}
-            >
-              <span className="material-symbols-outlined">playlist_add_check</span>
-            </button>
-            <button onClick={onDelete} className="w-10 h-10 rounded-full flex items-center justify-center text-zinc-300 hover:text-error hover:bg-error/10">
-              <span className="material-symbols-outlined">delete</span>
-            </button>
+
+        {/* Actions Area */}
+        <div className="flex items-center gap-0.5 shrink-0">
+          {isEditing ? (
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={onDelete} 
+                className="w-9 h-9 rounded-xl flex items-center justify-center bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors mr-2"
+                title="Delete Gig"
+              >
+                <span className="material-symbols-outlined text-lg">delete</span>
+              </button>
+              <button onClick={handleSave} className="w-9 h-9 rounded-xl flex items-center justify-center bg-green-50 text-green-600 hover:bg-green-100 transition-colors">
+                <span className="material-symbols-outlined text-lg">check</span>
+              </button>
+              <button onClick={() => setIsEditing(false)} className="w-9 h-9 rounded-xl flex items-center justify-center bg-zinc-50 text-zinc-600 hover:bg-zinc-100 transition-colors">
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+          ) : (
+            <>
+              <button 
+                onClick={() => setIsEditing(true)}
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-400 hover:bg-surface-container-low transition-colors"
+                title="Edit Gig"
+              >
+                <span className="material-symbols-outlined text-lg">edit</span>
+              </button>
+              <button 
+                onClick={() => setShowSetlist(!showSetlist)}
+                className={cn(
+                   "w-9 h-9 rounded-xl flex items-center justify-center transition-all",
+                   showSetlist ? "bg-surface-container-high text-on-surface" : "text-zinc-400 hover:bg-surface-container-low"
+                )}
+                title="Manage Setlist"
+              >
+                <span className="material-symbols-outlined text-lg">playlist_add_check</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
