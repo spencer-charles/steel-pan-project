@@ -117,7 +117,7 @@ export function PerformancesSection({
       </AnimatePresence>
 
       {/* Performance Cards */}
-      <div className="grid grid-cols-1 gap-4 pb-20">
+      <div className="grid grid-cols-1 gap-4 pb-32">
         {performances.map((perf) => (
           <PerformanceCard 
             key={perf.id} 

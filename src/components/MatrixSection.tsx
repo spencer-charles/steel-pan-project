@@ -78,7 +78,7 @@ export function MatrixSection({
         </div>
       </div>
 
-      <div className="pb-24">
+      <div className="pb-32">
         {!filterPerfId && !filterSongId ? (
           <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-slate-50 rounded-3xl text-slate-300">
             <span className="material-symbols-outlined text-4xl mb-2 opacity-20">find_in_page</span>

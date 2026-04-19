@@ -281,7 +281,7 @@ export function HuddleMasterCommand({
       </section>
 
       {/* Archived Gigs Section */}
-      <section className="mb-20">
+      <section className="mb-32">
         <button 
           onClick={() => setIsArchiveOpen(!isArchiveOpen)}
           className="flex items-center gap-2 group mb-6 px-1"

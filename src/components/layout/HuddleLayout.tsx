@@ -13,7 +13,7 @@ interface HuddleLayoutProps {
 
 export function HuddleLayout({ children, activeTab, onTabChange, userInitials }: HuddleLayoutProps) {
   return (
-    <div className="bg-surface text-on-surface min-h-screen pb-24">
+    <div className="bg-surface text-on-surface min-h-screen pb-32">
       {/* TopAppBar */}
       <header className="fixed top-0 w-full z-50 bg-zinc-50/80 backdrop-blur-xl dark:bg-zinc-950/80 shadow-[0_10px_30px_rgba(0,0,0,0.03)] flex justify-center items-center px-6 py-4">
         <div className="flex items-center gap-3">
@@ -26,7 +26,10 @@ export function HuddleLayout({ children, activeTab, onTabChange, userInitials }:
       </main>
 
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 w-full z-50 bg-zinc-50/90 backdrop-blur-lg dark:bg-zinc-950/90 shadow-[0_-10px_40px_rgba(0,0,0,0.04)] rounded-t-2xl flex justify-around items-center px-2 py-3 pb-safe">
+      <nav 
+        className="fixed bottom-0 left-0 w-full z-50 bg-zinc-50/90 backdrop-blur-lg dark:bg-zinc-950/90 shadow-[0_-10px_40px_rgba(0,0,0,0.04)] rounded-t-2xl flex justify-around items-center px-2 py-3"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}
+      >
         {/* Home */}
         <button 
           onClick={() => onTabChange("master")}
