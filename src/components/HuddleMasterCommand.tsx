@@ -52,7 +52,10 @@ export function HuddleMasterCommand({
   
   const [quickAddMemberId, setQuickAddMemberId] = useState<Record<string, string>>({});
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+  const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
 
+  // Close popup when clicking outside could be added, but a simple toggle works for now
+  
   const handleQuickAvailability = async (memberId: string, perfId: string) => {
     if (!memberId || !perfId) return;
     try {
@@ -148,7 +151,7 @@ export function HuddleMasterCommand({
               return (
                 <div 
                   key={perf.id} 
-                  className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm transition-all hover:shadow-md flex flex-col gap-5 relative overflow-hidden group"
+                  className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm transition-all hover:shadow-md flex flex-col gap-5 relative group"
                 >
                   {/* Archive Button */}
                   <button 
@@ -183,16 +186,60 @@ export function HuddleMasterCommand({
                   {/* Available Personnel */}
                   <div className="flex flex-col gap-2">
                     <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Available Players</span>
-                    <div className="flex flex-wrap gap-x-3 gap-y-2">
-                      {availableMembers.map(m => (
-                        <div 
-                          key={m.id} 
-                          className="flex items-center gap-1.5"
-                        >
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                          <span className="text-xs font-bold text-slate-700">{m.name}</span>
-                        </div>
-                      ))}
+                    <div className="flex flex-wrap gap-x-3 gap-y-2 relative">
+                      {availableMembers.map(m => {
+                        const isEditing = editingPlayerId === `${perf.id}_${m.id}`;
+                        return (
+                          <div key={m.id} className="relative">
+                            <button 
+                              onClick={() => setEditingPlayerId(isEditing ? null : `${perf.id}_${m.id}`)}
+                              className="flex items-center gap-1.5 focus:outline-none hover:bg-slate-50 px-1 rounded transition-colors group/player"
+                            >
+                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 group-hover/player:bg-emerald-400 transition-colors"></div>
+                              <span className="text-xs font-bold text-slate-700 group-hover/player:text-slate-900 transition-colors">{m.name}</span>
+                            </button>
+                            
+                            {isEditing && (
+                              <>
+                                <div 
+                                  className="fixed inset-0 z-40" 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingPlayerId(null);
+                                  }}
+                                />
+                                <div className="absolute top-full left-0 mt-2 z-50 bg-white border border-slate-100 shadow-xl rounded-xl p-2 w-48 animate-in fade-in zoom-in-95 duration-100">
+                                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 pb-1 mb-1 border-b border-slate-50">Edit {m.name}</div>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateAvailability(m.id, 'unavailable', perf.id);
+                                      setEditingPlayerId(null);
+                                      showToast(`${m.name} marked unavailable`, "info");
+                                    }}
+                                    className="w-full text-left px-2 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
+                                  >
+                                    <span className="material-symbols-outlined text-[14px]">person_off</span>
+                                    Mark Unavailable
+                                  </button>
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateAvailability(m.id, 'pending', perf.id);
+                                      setEditingPlayerId(null);
+                                      showToast(`${m.name} marked pending`, "info");
+                                    }}
+                                    className="w-full text-left px-2 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-2"
+                                  >
+                                    <span className="material-symbols-outlined text-[14px]">help</span>
+                                    Mark Pending
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
                       {availableMembers.length === 0 && (
                         <span className="text-[10px] font-medium text-slate-300 italic">No one signed up yet</span>
                       )}
