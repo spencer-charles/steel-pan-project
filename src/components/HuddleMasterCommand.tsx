@@ -14,6 +14,7 @@ interface HuddleMasterCommandProps {
   songs: Song[];
   performances: Performance[];
   availability: Record<string, AvailabilityStatus>;
+  allAvailability?: Record<string, Record<string, AvailabilityStatus>>;
   updateAvailability: (memberId: string, status: AvailabilityStatus, perfId: string) => Promise<void>;
   addMember: (member: Omit<Member, "id">) => Promise<void>;
   addSong: (song: Omit<Song, "id">) => Promise<void>;
@@ -21,10 +22,11 @@ interface HuddleMasterCommandProps {
   setFilterPerfId: (id: string) => void;
   filterSongId: string;
   setFilterSongId: (id: string) => void;
-  onTabChange: (tab: TabId) => void;
+  onTabChange: (tab: any) => void; // Using any to avoid Sidebar dependency for now
   assignments: any[];
   defaultAssignments: any[];
   removeAssignment: (songId: string, instrument: string, memberId: string) => void;
+  updatePerformance: (id: string, updates: Partial<Performance>) => Promise<void>;
 }
 
 export function HuddleMasterCommand({ 
@@ -32,6 +34,7 @@ export function HuddleMasterCommand({
   songs, 
   performances, 
   availability,
+  allAvailability = {},
   updateAvailability,
   addMember,
   addSong,
@@ -42,24 +45,21 @@ export function HuddleMasterCommand({
   onTabChange,
   assignments,
   defaultAssignments,
-  removeAssignment
+  removeAssignment,
+  updatePerformance
 }: HuddleMasterCommandProps) {
   const { showToast } = useToast();
   
-  // State for Availability Update form
-  const [selectedMemberId, setSelectedMemberId] = useState("");
-  const [selectedPerfId, setSelectedPerfId] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState<AvailabilityStatus>("available");
+  const [quickAddMemberId, setQuickAddMemberId] = useState<Record<string, string>>({});
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
-  const handleUpdateAvailability = async () => {
-    if (!selectedMemberId || !selectedPerfId) {
-        showToast("Please select a player and gig", "error");
-        return;
-    }
+  const handleQuickAvailability = async (memberId: string, perfId: string) => {
+    if (!memberId || !perfId) return;
     try {
-      await updateAvailability(selectedMemberId, selectedStatus, selectedPerfId);
-      showToast("Availability updated successfully");
-    } catch (e) {
+      await updateAvailability(memberId, 'available', perfId);
+      showToast("Availability updated!", "success");
+      setQuickAddMemberId(prev => ({ ...prev, [perfId]: "" }));
+    } catch (error) {
       showToast("Failed to update availability", "error");
     }
   };
@@ -105,216 +105,174 @@ export function HuddleMasterCommand({
       </section>
 
       {/* Player Availability Section */}
-      <section className="mb-10">
-        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-black/5">
-          <div className="flex items-center gap-2 mb-6">
+      <section className="mb-12">
+        <div className="flex items-center justify-between mb-6 px-1">
+          <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>event_available</span>
-            <h2 className="font-headline font-bold text-xl text-on-surface">Player Availability</h2>
+            <h2 className="font-headline font-bold text-xl text-on-surface">Gig Availability</h2>
           </div>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-on-tertiary-fixed-variant px-1">Select Player</label>
-              <select 
-                value={selectedMemberId}
-                onChange={(e) => setSelectedMemberId(e.target.value)}
-                className="w-full bg-surface-container-low border-none rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/40 appearance-none text-on-surface font-medium"
-              >
-                <option value="">Choose a player...</option>
-                {members.map(m => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-on-tertiary-fixed-variant px-1">Gig</label>
-              <select 
-                value={selectedPerfId}
-                onChange={(e) => setSelectedPerfId(e.target.value)}
-                className="w-full bg-surface-container-low border-none rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/40 appearance-none text-on-surface font-medium"
-              >
-                <option value="">Choose a gig...</option>
-                {performances.map(p => (
-                    <option key={p.id} value={p.id}>{p.title || p.date?.toString()}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider text-on-tertiary-fixed-variant px-1">Status</label>
-              <select 
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value as AvailabilityStatus)}
-                className="w-full bg-surface-container-low border-none rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/40 appearance-none text-on-surface font-medium"
-              >
-                <option value="available">AVAILABLE</option>
-                <option value="unavailable">UNAVAILABLE</option>
-              </select>
-            </div>
-            <button 
-               onClick={handleUpdateAvailability}
-               className="w-full bg-primary-gradient text-on-primary font-bold py-4 rounded-xl mt-4 shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity active:scale-[0.98] text-sm"
-            >
-              Update Availability
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Operational Matrix Section */}
-      <section className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-headline font-bold text-xl text-on-surface">Operational Matrix</h2>
-          <button 
-            onClick={resetFilters}
-            className="text-primary flex items-center gap-1 text-xs font-bold uppercase tracking-wider"
-          >
-            <span className="material-symbols-outlined text-sm">tune</span> Reset
-          </button>
+          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em]">Sign Up Sheet</p>
         </div>
 
-        {/* Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-          <div className="relative flex items-center">
-            <span className="material-symbols-outlined absolute left-4 text-zinc-400">theater_comedy</span>
-            <select 
-              value={filterPerfId}
-              onChange={(e) => setFilterPerfId(e.target.value)}
-              className="w-full bg-surface-container-low border-none rounded-lg py-3 pl-12 pr-10 focus:ring-2 focus:ring-primary/40 text-sm appearance-none outline-none font-medium text-on-surface" 
-            >
-              <option value="">Choose a gig...</option>
-              {performances.map(p => (
-                <option key={p.id} value={p.id}>{p.title || p.date?.toString()}</option>
-              ))}
-            </select>
-            <span className="material-symbols-outlined absolute right-4 text-zinc-400 pointer-events-none">expand_more</span>
-          </div>
-          <div className="relative flex items-center">
-            <span className="material-symbols-outlined absolute left-4 text-zinc-400">music_note</span>
-            <select 
-              value={filterSongId}
-              onChange={(e) => setFilterSongId(e.target.value)}
-              className="w-full bg-surface-container-low border-none rounded-lg py-3 pl-12 pr-10 focus:ring-2 focus:ring-primary/40 text-sm appearance-none outline-none font-medium text-on-surface" 
-            >
-              <option value="">Choose a song...</option>
-              {songs.map(s => (
-                <option key={s.id} value={s.id}>{s.title}</option>
-              ))}
-            </select>
-            <span className="material-symbols-outlined absolute right-4 text-zinc-400 pointer-events-none">expand_more</span>
-          </div>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {performances
+            .filter(p => !p.isArchived)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .map(perf => {
+              // Parse date carefully to avoid timezone shifts
+              let day, month;
+              try {
+                const dateParts = perf.date.split('-');
+                if (dateParts.length === 3) {
+                  const y = parseInt(dateParts[0]);
+                  const m = parseInt(dateParts[1]) - 1;
+                  const d = parseInt(dateParts[2]);
+                  const dateObj = new Date(y, m, d);
+                  day = dateObj.getDate();
+                  month = dateObj.toLocaleString('default', { month: 'short' }).toUpperCase();
+                } else {
+                  const dateObj = new Date(perf.date);
+                  day = dateObj.getDate();
+                  month = dateObj.toLocaleString('default', { month: 'short' }).toUpperCase();
+                }
+              } catch (e) {
+                day = "??";
+                month = "ERR";
+              }
+              
+              const perfAvailability = allAvailability[perf.id] || {};
+              const availableMembers = members.filter(m => perfAvailability[m.id] === 'available');
 
-        {/* Matrix Grid */}
-        <div className="pb-12">
-          {!filterPerfId && !filterSongId ? (
-            <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-black/5 rounded-xl text-zinc-300">
-              <span className="material-symbols-outlined text-4xl mb-2 opacity-20">inventory_2</span>
-              <p className="font-bold text-xs uppercase tracking-widest opacity-40">Select a gig or song to view coverage</p>
-            </div>
-          ) : filterPerfId && !filterSongId ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {members
-                .filter(m => availability?.[m.id] === 'available')
-                .map(member => {
-                  const selectedPerf = performances.find(p => p.id === filterPerfId);
-                  const setlist = selectedPerf?.setlist || [];
-                  
-                  // Use both gig-specific and default assignments for the overview
-                  const memberAssignments = [...assignments, ...defaultAssignments]
-                    .filter(a => a.memberId === member.id && setlist.includes(a.songId));
-                  
-                  // Deduplicate by song and instrument
-                  const seen = new Set();
-                  const uniqueAssignments = memberAssignments.filter(a => {
-                    const key = `${a.songId}-${a.instrument}`;
-                    if (seen.has(key)) return false;
-                    seen.add(key);
-                    return true;
-                  });
+              return (
+                <div 
+                  key={perf.id} 
+                  className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm transition-all hover:shadow-md flex flex-col gap-5 relative overflow-hidden group"
+                >
+                  {/* Archive Button */}
+                  <button 
+                    onClick={() => updatePerformance(perf.id, { isArchived: true })}
+                    className="absolute top-5 right-5 p-2 bg-slate-50 text-slate-400 rounded-full hover:text-amber-500 hover:bg-amber-50 transition-all z-10"
+                    title="Archive Gig"
+                  >
+                    <span className="material-symbols-outlined text-sm">archive</span>
+                  </button>
 
-                  const memberSongs = uniqueAssignments.map(a => {
-                    const song = songs.find(s => s.id === a.songId);
-                    return { title: song?.title || "Unknown", instrument: a.instrument };
-                  });
-
-                  return (
-                    <div key={member.id} className="bg-surface-container-lowest border border-black/5 rounded-xl p-4 shadow-sm flex flex-col gap-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                        <span className="font-bold text-sm text-on-surface">{member.name}</span>
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-1.5">
-                        {memberSongs.map((ms, i) => (
-                          <span 
-                            key={i} 
-                            className="text-[9px] font-bold px-2 py-0.5 rounded-lg bg-green-50 text-green-600 border border-green-100"
-                          >
-                            {ms.title} <span className="opacity-60 font-medium">({ms.instrument})</span>
-                          </span>
-                        ))}
-                        {memberSongs.length === 0 && (
-                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest italic opacity-50">No songs assigned</span>
-                        )}
-                      </div>
+                  {/* Calendar Widget */}
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-14 h-16 bg-blue-50 rounded-2xl flex flex-col items-center justify-center border border-blue-100">
+                      <span className="text-[10px] font-black text-blue-400 mb-0.5">{month}</span>
+                      <span className="text-xl font-black text-blue-700 leading-none">{day}</span>
                     </div>
-                  );
-                })}
-              {members.filter(m => availability?.[m.id] === 'available').length === 0 && (
-                <div className="col-span-full py-12 flex flex-col items-center justify-center border-2 border-dashed border-black/5 rounded-xl text-zinc-300">
-                  <span className="material-symbols-outlined text-4xl mb-2 opacity-20">person_off</span>
-                  <p className="font-bold text-sm uppercase tracking-wider opacity-20">No Players Available</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {INSTRUMENTS.map((inst) => {
-                const filteredAssignments = assignments.filter(a => 
-                  a.instrument === inst && 
-                  (filterSongId ? a.songId === filterSongId : true)
-                );
+                    <div className="min-w-0 pt-1 pr-8">
+                      <h3 className="font-bold text-slate-800 truncate leading-tight">{perf.title || "TBD Performance"}</h3>
+                      <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">location_on</span>
+                        <span className="truncate">{perf.location || "Location TBD"}</span>
+                      </p>
+                    </div>
+                  </div>
 
-                return (
-                  <div key={inst} className="bg-surface-container-lowest border border-black/5 rounded-xl p-4 shadow-sm transition-all hover:shadow-md flex flex-col gap-4">
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1 px-1">{inst}</h3>
-                    
-                    <div className="space-y-2">
-                      {filteredAssignments.map((a, i) => {
-                        const member = members.find(m => m.id === a.memberId);
-                        const status = availability[member?.id || ""] || "pending";
-                        
-                        return (
-                          <div key={i} className="bg-surface-container-low px-3 py-1.5 rounded-xl border border-black/5 flex items-center justify-between relative group">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <div className={cn(
-                                "w-2 h-2 rounded-full shrink-0",
-                                status === "available" ? "bg-emerald-500" : status === "unavailable" ? "bg-rose-500" : "bg-zinc-300"
-                              )}></div>
-                              <span className="font-bold text-xs text-on-surface truncate">{member?.name || "Unnamed Player"}</span>
-                            </div>
-                            <button 
-                              onClick={() => removeAssignment(a.songId, inst, a.memberId)}
-                              className="opacity-0 group-hover:opacity-100 p-1 text-zinc-300 hover:text-error transition-all"
-                            >
-                              <span className="material-symbols-outlined text-sm">delete</span>
-                            </button>
-                          </div>
-                        );
-                      })}
-
-                      {filteredAssignments.length === 0 && (
-                        <div className="py-6 flex flex-col items-center justify-center border-2 border-dashed border-black/5 rounded-xl text-zinc-300">
-                          <span className="material-symbols-outlined text-2xl opacity-20">person_off</span>
-                          <p className="text-[10px] font-bold uppercase mt-1 opacity-20">No Mapping</p>
+                  {/* Available Personnel */}
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Available Players</span>
+                    <div className="flex flex-wrap gap-x-3 gap-y-2">
+                      {availableMembers.map(m => (
+                        <div 
+                          key={m.id} 
+                          className="flex items-center gap-1.5"
+                        >
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                          <span className="text-xs font-bold text-slate-700">{m.name}</span>
                         </div>
+                      ))}
+                      {availableMembers.length === 0 && (
+                        <span className="text-[10px] font-medium text-slate-300 italic">No one signed up yet</span>
                       )}
                     </div>
                   </div>
-                );
-              })}
+
+                  {/* Quick Sign Up */}
+                  <div className="mt-auto pt-4 border-t border-slate-50">
+                    <div className="relative flex items-center gap-2">
+                      <select 
+                        value={quickAddMemberId[perf.id] || ""}
+                        onChange={(e) => handleQuickAvailability(e.target.value, perf.id)}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 px-3 text-xs font-bold text-slate-600 appearance-none outline-none focus:ring-2 focus:ring-blue-100 transition-all hover:bg-slate-100"
+                      >
+                        <option value="">Sign up for this gig...</option>
+                        {members
+                          .filter(m => perfAvailability[m.id] !== 'available')
+                          .map(m => (
+                            <option key={m.id} value={m.id}>{m.name}</option>
+                          ))
+                        }
+                      </select>
+                      <div className="absolute right-3 pointer-events-none">
+                        <span className="material-symbols-outlined text-slate-300 text-sm">person_add</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          }
+          {performances.filter(p => !p.isArchived).length === 0 && (
+            <div className="col-span-full py-12 flex flex-col items-center justify-center bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-100 text-slate-300">
+              <span className="material-symbols-outlined text-4xl mb-2">calendar_today</span>
+              <p className="font-bold text-sm">No upcoming gigs scheduled</p>
             </div>
           )}
         </div>
+      </section>
+
+      {/* Archived Gigs Section */}
+      <section className="mb-20">
+        <button 
+          onClick={() => setIsArchiveOpen(!isArchiveOpen)}
+          className="flex items-center gap-2 group mb-6 px-1"
+        >
+          <span className={cn(
+            "material-symbols-outlined text-slate-300 transition-transform duration-300",
+            isArchiveOpen ? "rotate-180" : ""
+          )}>expand_more</span>
+          <h2 className="font-headline font-bold text-xl text-slate-400">Archived Gigs</h2>
+          <span className="bg-slate-100 text-slate-400 text-[10px] font-black px-2 py-0.5 rounded-full">
+            {performances.filter(p => p.isArchived).length}
+          </span>
+        </button>
+
+        {isArchiveOpen && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in slide-in-from-top-4 duration-300">
+            {performances
+              .filter(p => p.isArchived)
+              .map(perf => (
+                <div 
+                  key={perf.id} 
+                  className="bg-slate-50/50 border border-slate-100 rounded-[2rem] p-6 flex flex-col gap-4 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all group"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-slate-600 truncate">{perf.title}</h3>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{perf.date}</p>
+                    </div>
+                    <button 
+                      onClick={() => updatePerformance(perf.id, { isArchived: false })}
+                      className="p-2 text-slate-300 hover:text-primary transition-colors"
+                      title="Unarchive Gig"
+                    >
+                      <span className="material-symbols-outlined text-sm">unarchive</span>
+                    </button>
+                  </div>
+                </div>
+              ))
+            }
+            {performances.filter(p => p.isArchived).length === 0 && (
+              <div className="col-span-full py-8 text-center text-slate-300 text-xs font-bold uppercase tracking-widest italic opacity-50">
+                No archived gigs
+              </div>
+            )}
+          </div>
+        )}
       </section>
     </div>
   );

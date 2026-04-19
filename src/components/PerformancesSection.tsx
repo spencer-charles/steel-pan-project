@@ -149,9 +149,26 @@ function PerformanceCard({
   const [showSetlist, setShowSetlist] = useState(false);
   const { showToast } = useToast();
 
-  const perfDate = new Date(perf.date);
-  const month = perfDate.toLocaleString('default', { month: 'short' });
-  const day = perfDate.getDate() + 1; // Correction for date offset common in input type="date"
+  // Robust date parsing for local time display
+  let month = "ERR";
+  let day = "??";
+  try {
+    const parts = perf.date.split("-");
+    if (parts.length === 3) {
+      const y = parseInt(parts[0]);
+      const m = parseInt(parts[1]) - 1;
+      const d = parseInt(parts[2]);
+      const dateObj = new Date(y, m, d);
+      month = dateObj.toLocaleString("default", { month: "short" });
+      day = dateObj.getDate().toString();
+    } else {
+      const dateObj = new Date(perf.date);
+      month = dateObj.toLocaleString("default", { month: "short" });
+      day = dateObj.getDate().toString();
+    }
+  } catch (e) {
+    console.error("Date parse error", e);
+  }
 
   return (
     <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-black/5 flex flex-col gap-4">

@@ -143,17 +143,26 @@ export function MatrixSection({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {INSTRUMENTS.map((inst) => {
-              const filteredAssignments = assignments.filter(a => 
+              const allTargetAssignments = [...assignments, ...defaultAssignments];
+              const filteredAssignments = allTargetAssignments.filter(a => 
                 a.instrument === inst && 
                 (filterSongId ? a.songId === filterSongId : true)
               );
+
+              // Deduplicate by memberId per instrument
+              const seenMembers = new Set();
+              const uniqueAssignments = filteredAssignments.filter(a => {
+                if (seenMembers.has(a.memberId)) return false;
+                seenMembers.add(a.memberId);
+                return true;
+              });
 
               return (
                 <div key={inst} className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm transition-all hover:shadow-md flex flex-col gap-4">
                   <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{inst}</h3>
                   
                   <div className="space-y-2">
-                    {filteredAssignments.map((a, i) => {
+                    {uniqueAssignments.map((a, i) => {
                       const member = members.find(m => m.id === a.memberId);
                       const status = availabilityMap?.[member?.id || ""] || "pending";
                       
@@ -164,7 +173,12 @@ export function MatrixSection({
                               "w-2 h-2 rounded-full shrink-0",
                               status === "available" ? "bg-green-500" : status === "unavailable" ? "bg-red-500" : "bg-slate-300"
                             )}></div>
-                            <span className="font-bold text-xs text-slate-800 truncate">{member?.name || "Unnamed Player"}</span>
+                            <span className={cn(
+                              "font-bold text-xs truncate",
+                              status === "unavailable" ? "text-slate-300" : "text-slate-800"
+                            )}>
+                              {member?.name || "Unnamed Player"}
+                            </span>
                           </div>
                           <button 
                             onClick={() => removeAssignment(a.songId, inst, a.memberId)}
@@ -176,7 +190,7 @@ export function MatrixSection({
                       );
                     })}
 
-                    {filteredAssignments.length === 0 && (
+                    {uniqueAssignments.length === 0 && (
                       <div className="py-8 flex flex-col items-center justify-center border-2 border-dashed border-slate-50 rounded-2xl text-slate-200">
                         <span className="material-symbols-outlined text-2xl">person_off</span>
                         <p className="text-[10px] font-bold uppercase mt-1">No Mapping</p>

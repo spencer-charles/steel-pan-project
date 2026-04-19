@@ -22,6 +22,7 @@ export interface Performance {
   description?: string;
   status: "pending" | "confirmed" | "cancelled" | "past";
   setlist: string[]; // Array of song IDs
+  isArchived?: boolean;
 }
 
 export function usePerformances() {

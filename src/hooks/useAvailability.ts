@@ -22,35 +22,30 @@ export interface Availability {
 }
 
 export function useAvailability(performanceId?: string) {
-  const [availability, setAvailability] = useState<Record<string, AvailabilityStatus>>({});
+  const [allAvailability, setAllAvailability] = useState<Record<string, Record<string, AvailabilityStatus>>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // If no performanceId is provided, we can optionally fetch all or none.
-    // Given the dashboard needs it per-performance, we'll fetch for the provided ID.
-    if (!performanceId) {
-        setAvailability({});
-        setLoading(false);
-        return;
-    }
-
-    const q = query(
-      collection(db, "availability"), 
-      where("performanceId", "==", performanceId)
-    );
+    const q = query(collection(db, "availability"));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data: Record<string, AvailabilityStatus> = {};
+      const data: Record<string, Record<string, AvailabilityStatus>> = {};
       snapshot.docs.forEach((doc) => {
         const avail = doc.data() as Availability;
-        data[avail.memberId] = avail.status;
+        if (!data[avail.performanceId]) {
+          data[avail.performanceId] = {};
+        }
+        data[avail.performanceId][avail.memberId] = avail.status;
       });
-      setAvailability(data);
+      setAllAvailability(data);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [performanceId]);
+  }, []);
+
+  // Derived filtered availability for compatibility
+  const availability = performanceId ? (allAvailability[performanceId] || {}) : {};
 
   const updateAvailability = async (memberId: string, status: AvailabilityStatus, targetPerfId?: string) => {
     const perfId = targetPerfId || performanceId;
@@ -64,5 +59,5 @@ export function useAvailability(performanceId?: string) {
     });
   };
 
-  return { availability, loading, updateAvailability };
+  return { availability, allAvailability, loading, updateAvailability };
 }

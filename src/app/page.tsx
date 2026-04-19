@@ -31,7 +31,7 @@ export default function Home() {
 
   const { assignments, assignMember, removeAssignment } = useAssignments(filterPerfId);
   const { assignments: defaultAssignments } = useAssignments("default_coverage");
-  const { availability, updateAvailability } = useAvailability(filterPerfId);
+  const { availability, allAvailability, loading: availabilityLoading, updateAvailability } = useAvailability(filterPerfId);
 
   // Even if auth is loading, we can show the app since we're allowing public access
   // But we'll wait for hooks to avoid flicker if we want. 
@@ -57,6 +57,8 @@ export default function Home() {
             assignments={assignments}
             defaultAssignments={defaultAssignments}
             removeAssignment={removeAssignment}
+            allAvailability={allAvailability}
+            updatePerformance={updatePerformance}
           />
         );
       case "personnel":
@@ -91,6 +93,7 @@ export default function Home() {
             filterSongId={filterSongId}
             setFilterSongId={setFilterSongId}
             removeAssignment={removeAssignment}
+            allAvailability={allAvailability}
           />
         );
       default:
@@ -111,6 +114,8 @@ export default function Home() {
             assignments={assignments}
             defaultAssignments={defaultAssignments}
             removeAssignment={removeAssignment}
+            allAvailability={allAvailability}
+            updatePerformance={updatePerformance}
           />
         );
     }
