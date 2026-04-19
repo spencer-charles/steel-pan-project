@@ -170,6 +170,12 @@ export function HuddleMasterCommand({
                       <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
                         <span className="material-symbols-outlined text-sm">location_on</span>
                         <span className="truncate">{perf.location || "Location TBD"}</span>
+                        {(perf.startTime || perf.endTime) && (
+                          <span className="flex items-center gap-1 ml-2 text-blue-500 font-medium">
+                            <span className="material-symbols-outlined text-[14px]">schedule</span>
+                            {perf.startTime}{perf.endTime ? ` - ${perf.endTime}` : ''}
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>

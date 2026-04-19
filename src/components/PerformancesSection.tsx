@@ -34,13 +34,15 @@ export function PerformancesSection({
   const [showAdd, setShowAdd] = useState(false);
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const { showToast } = useToast();
 
   const handleAdd = async () => {
     if (!title || !date) return;
     try {
-      await addPerformance({ title, date, location: "", status: "pending", setlist: [] });
-      setTitle(""); setDate(""); setShowAdd(false);
+      await addPerformance({ title, date, startTime, endTime, location: "", status: "pending", setlist: [] });
+      setTitle(""); setDate(""); setStartTime(""); setEndTime(""); setShowAdd(false);
       showToast(`Gig "${title}" scheduled`);
     } catch (e) {
       showToast("Failed to schedule gig", "error");
@@ -91,6 +93,20 @@ export function PerformancesSection({
                   value={date}
                   onChange={e => setDate(e.target.value)}
                 />
+                <div className="grid grid-cols-2 gap-2">
+                  <input 
+                    type="time" 
+                    className="h-11 px-4 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/20 text-sm outline-none text-zinc-400"
+                    value={startTime}
+                    onChange={e => setStartTime(e.target.value)}
+                  />
+                  <input 
+                    type="time" 
+                    className="h-11 px-4 bg-surface-container-low border-none rounded-lg focus:ring-2 focus:ring-primary/20 text-sm outline-none text-zinc-400"
+                    value={endTime}
+                    onChange={e => setEndTime(e.target.value)}
+                  />
+                </div>
               </div>
               <button onClick={handleAdd} className="w-full h-11 bg-primary-gradient text-white rounded-lg text-sm font-bold active:scale-95 transition-transform">
                 Save Gig
@@ -151,6 +167,8 @@ function PerformanceCard({
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(perf.title);
   const [editDate, setEditDate] = useState(perf.date);
+  const [editStartTime, setEditStartTime] = useState(perf.startTime || "");
+  const [editEndTime, setEditEndTime] = useState(perf.endTime || "");
   const [editLocation, setEditLocation] = useState(perf.location || "");
   const { showToast } = useToast();
 
@@ -158,6 +176,8 @@ function PerformanceCard({
     onUpdate({ 
       title: editTitle, 
       date: editDate, 
+      startTime: editStartTime,
+      endTime: editEndTime,
       location: editLocation 
     });
     setIsEditing(false);
@@ -218,11 +238,35 @@ function PerformanceCard({
                   placeholder="Location"
                 />
               </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input 
+                  type="time"
+                  value={editStartTime}
+                  onChange={e => setEditStartTime(e.target.value)}
+                  className="w-full text-[10px] bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none text-slate-500"
+                />
+                <input 
+                  type="time"
+                  value={editEndTime}
+                  onChange={e => setEditEndTime(e.target.value)}
+                  className="w-full text-[10px] bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none text-slate-500"
+                />
+              </div>
             </div>
           ) : (
             <div className="mb-1">
               <h4 className="font-bold text-sm text-on-surface leading-tight truncate">{perf.title}</h4>
-              <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">{perf.location || "Location TBD"}</p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <p className="text-[10px] text-slate-400 font-medium truncate">{perf.location || "Location TBD"}</p>
+                {(perf.startTime || perf.endTime) && (
+                  <>
+                    <span className="w-1 h-1 rounded-full bg-slate-200 shadow-inner" />
+                    <p className="text-[10px] text-primary font-bold">
+                      {perf.startTime}{perf.endTime ? ` - ${perf.endTime}` : ""}
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
           )}
           

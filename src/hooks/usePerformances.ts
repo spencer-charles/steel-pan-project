@@ -18,6 +18,8 @@ export interface Performance {
   id: string;
   title: string;
   date: string;
+  startTime?: string;
+  endTime?: string;
   location: string;
   description?: string;
   status: "pending" | "confirmed" | "cancelled" | "past";
