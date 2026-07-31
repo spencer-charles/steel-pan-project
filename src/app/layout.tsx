@@ -1,15 +1,27 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import { CurrentMemberProvider } from "@/context/CurrentMemberContext";
 import { ToastProvider } from "@/components/ToastProvider";
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-body' });
 const manrope = Manrope({ subsets: ["latin"], variable: '--font-headline' });
 
 export const metadata: Metadata = {
-  title: "Huddle Dashboard",
-  description: "Advanced band management and orchestral coordination.",
+  title: "Seattle Steel Pan Project",
+  description: "Gig availability, roster, and setlists for the Seattle Steel Pan Project.",
+  manifest: "/manifest.json",
+  appleWebApp: { capable: true, title: "Steel Pan", statusBarStyle: "default" },
+};
+
+// viewportFit is what makes env(safe-area-inset-*) resolve to real values on
+// notched phones — without it the bottom nav sits under the home indicator.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#3b683f",
 };
 
 export default function RootLayout({
@@ -25,7 +37,9 @@ export default function RootLayout({
       <body className={`${inter.variable} ${manrope.variable} font-body antialiased`}>
         <ToastProvider>
           <AuthProvider>
-            {children}
+            <CurrentMemberProvider>
+              {children}
+            </CurrentMemberProvider>
           </AuthProvider>
         </ToastProvider>
       </body>

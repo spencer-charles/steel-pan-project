@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 interface PersonnelSectionProps {
   members: Member[];
-  addMember: (member: Omit<Member, "id">) => Promise<void>;
+  addMember: (member: Omit<Member, "id">) => Promise<string>;
   deleteMember: (id: string) => Promise<void>;
 }
 
@@ -29,7 +29,7 @@ export function PersonnelSection({ members, addMember, deleteMember }: Personnel
       setName("");
       setShowAdd(false);
       showToast(`${name.trim()} added to the roster`);
-    } catch (e) {
+    } catch {
       showToast("Failed to add player", "error");
     }
   };
@@ -40,7 +40,7 @@ export function PersonnelSection({ members, addMember, deleteMember }: Personnel
         await deleteMember(member.id);
         showToast(`${member.name} removed from roster`, "info");
         setConfirmDeleteId(null);
-      } catch (e) {
+      } catch {
         showToast("Failed to remove player", "error");
       }
     } else {
@@ -51,31 +51,34 @@ export function PersonnelSection({ members, addMember, deleteMember }: Personnel
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col gap-1">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-1 min-w-0">
           <h1 className="text-3xl font-headline font-black tracking-tight text-on-surface">Personnel</h1>
-          <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-[0.2em]">Band Members & Logistics</p>
+          <p className="text-xs text-on-surface-variant font-bold uppercase tracking-[0.2em]">Band Members</p>
         </div>
-        <button 
+        <button
           onClick={() => setShowAdd(!showAdd)}
           className={cn(
-              "flex items-center gap-2 px-6 py-4 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-sm border border-black/5",
+              "shrink-0 flex items-center gap-2 px-5 min-h-12 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-sm border border-black/5",
               showAdd ? "bg-surface-container-high text-on-surface" : "bg-primary-gradient text-white"
           )}
         >
-          <span className="material-symbols-outlined text-sm">{showAdd ? "close" : "person_add"}</span>
+          <span className="material-symbols-outlined text-lg">{showAdd ? "close" : "person_add"}</span>
           {showAdd ? "Cancel" : "Add Player"}
         </button>
       </div>
 
       {/* Add Form */}
       {showAdd && (
-        <div className="bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-black/5 space-y-4 animate-in slide-in-from-top-4 duration-300">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-primary px-1">Register New Player</h3>
+        <div className="bg-surface-container-lowest p-5 rounded-xl shadow-sm border border-black/5 space-y-4 animate-in slide-in-from-top-4 duration-300">
+          <h3 className="text-sm font-bold uppercase tracking-widest text-primary px-1">Register New Player</h3>
           <div className="flex gap-3">
             <input
-              placeholder="Full Name"
-              className="w-full bg-surface-container-low border-none rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary/40 text-sm placeholder:text-zinc-400" 
+              placeholder="Full name"
+              aria-label="Full name"
+              autoComplete="name"
+              enterKeyHint="done"
+              className="flex-1 min-w-0 h-12 bg-surface-container-low border-none rounded-lg px-4 focus:ring-2 focus:ring-primary/40 text-base placeholder:text-outline/60 outline-none"
               value={name}
               onChange={e => setName(e.target.value)}
               autoFocus
@@ -84,7 +87,7 @@ export function PersonnelSection({ members, addMember, deleteMember }: Personnel
             <button
               onClick={handleAdd}
               disabled={!name.trim()}
-              className="bg-primary-gradient text-on-primary font-bold px-6 rounded-lg disabled:opacity-40 text-sm active:scale-95 transition-transform"
+              className="shrink-0 bg-primary-gradient text-on-primary font-bold px-6 h-12 rounded-lg disabled:opacity-40 text-base active:scale-95 transition-transform"
             >
               Add
             </button>
@@ -94,18 +97,24 @@ export function PersonnelSection({ members, addMember, deleteMember }: Personnel
 
       {/* Search & Refine */}
       <div className="relative flex items-center">
-        <span className="material-symbols-outlined absolute left-4 text-zinc-400">group</span>
-        <input 
+        <span className="material-symbols-outlined absolute left-4 text-on-surface-variant pointer-events-none">group</span>
+        <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-surface-container-low border-none rounded-lg py-3 pl-12 pr-4 focus:ring-2 focus:ring-primary/40 text-sm placeholder:text-zinc-400" 
-          placeholder="Search roster..." 
-          type="text" 
+          className="w-full h-12 bg-surface-container-low border-none rounded-lg pl-12 pr-14 focus:ring-2 focus:ring-primary/40 text-base placeholder:text-outline/60 outline-none"
+          placeholder="Search roster"
+          aria-label="Search roster"
+          enterKeyHint="search"
+          type="search"
         />
         {search && (
-            <button onClick={() => setSearch("")} className="absolute right-4 text-zinc-400 hover:text-zinc-600">
-                <span className="material-symbols-outlined text-sm">close</span>
-            </button>
+          <button
+            onClick={() => setSearch("")}
+            aria-label="Clear search"
+            className="absolute right-1 min-w-11 min-h-11 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"
+          >
+            <span className="material-symbols-outlined text-xl">close</span>
+          </button>
         )}
       </div>
 
@@ -129,10 +138,10 @@ export function PersonnelSection({ members, addMember, deleteMember }: Personnel
                   {member.name?.[0]?.toUpperCase() || "?"}
                 </div>
                 <div className="min-w-0">
-                  <p className="font-bold text-sm text-on-surface truncate">
+                  <p className="font-bold text-base text-on-surface truncate">
                     {member.name || "Unnamed Player"}
                   </p>
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                  <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">
                     {member.role || "Member"}
                   </p>
                 </div>
@@ -140,14 +149,15 @@ export function PersonnelSection({ members, addMember, deleteMember }: Personnel
 
               <button
                 onClick={() => handleDelete(member)}
+                aria-label={isConfirming ? `Confirm removing ${member.name}` : `Remove ${member.name}`}
                 className={cn(
-                  "shrink-0 ml-2 px-3 py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition-all",
+                  "shrink-0 ml-2 px-3 min-h-11 min-w-11 flex items-center justify-center rounded-lg text-sm font-extrabold uppercase tracking-wider transition-all",
                   isConfirming
                     ? "bg-error text-white"
-                    : "text-zinc-300 hover:text-error hover:bg-error/10"
+                    : "text-on-surface-variant hover:text-error hover:bg-error/10"
                 )}
               >
-                {isConfirming ? "Confirm" : <span className="material-symbols-outlined text-lg">delete</span>}
+                {isConfirming ? "Confirm" : <span className="material-symbols-outlined text-xl">delete</span>}
               </button>
             </div>
           );
@@ -156,10 +166,13 @@ export function PersonnelSection({ members, addMember, deleteMember }: Personnel
 
       {/* Empty state */}
       {filteredMembers.length === 0 && (
-        <div className="text-center py-16 opacity-30">
-          <span className="material-symbols-outlined text-5xl mb-4">group_off</span>
-          <p className="font-bold uppercase tracking-widest text-xs">
-            {search ? "No matches found" : "Roster is currently empty"}
+        <div className="text-center py-16 text-on-surface-variant">
+          <span className="material-symbols-outlined text-5xl mb-3">group_off</span>
+          <p className="font-bold text-base text-on-surface">
+            {search ? `No one matching "${search}"` : "The roster is empty"}
+          </p>
+          <p className="text-sm mt-1">
+            {search ? "Try a different spelling." : "Tap “Add Player” to add your first bandmate."}
           </p>
         </div>
       )}

@@ -9,10 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@modelcontextprotocol/server-github": "^2025.4.8",
     "clsx": "^2.1.1",
     "firebase": "^12.11.0",
     "firebase-admin": "^13.7.0",
-    "framer-motion": "^12.38.0",
     "lucide-react": "^1.7.0",
     "next": "16.2.1",
     "react": "19.2.4",

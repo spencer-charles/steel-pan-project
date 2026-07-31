@@ -108,10 +108,24 @@
   background: linear-gradient(135deg, #3b683f 0%, #90c190 100%);
 }
 
-.hide-scrollbar::-webkit-scrollbar { 
-  display: none; 
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
-.hide-scrollbar { 
-  -ms-overflow-style: none; 
-  scrollbar-width: none; 
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Entrance for toasts. Deliberately no animation-fill-mode: the element's
+   resting style is already the visible end state, so if the animation never
+   runs (throttled tab, reduced motion) the toast still shows. */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(0.75rem) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+.toast-enter {
+  animation: toast-in 200ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-enter { animation: none; }
 }

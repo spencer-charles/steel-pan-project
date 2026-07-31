@@ -1,82 +1,60 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useCurrentMember } from "@/context/CurrentMemberContext";
+import { IdentityGate } from "@/components/IdentityGate";
+import { ConnectionBanner, ErrorBanner, SectionSkeleton } from "@/components/DataState";
 import { useMembers } from "@/hooks/useMembers";
 import { useSongs } from "@/hooks/useSongs";
 import { usePerformances } from "@/hooks/usePerformances";
 import { useAssignments } from "@/hooks/useAssignments";
 import { useAvailability } from "@/hooks/useAvailability";
-import { motion, AnimatePresence } from "framer-motion";
 import { HuddleLayout } from "@/components/layout/HuddleLayout";
 import { HuddleMasterCommand } from "@/components/HuddleMasterCommand";
 import { PersonnelSection } from "@/components/PersonnelSection";
 import { RepertoireSection } from "@/components/RepertoireSection";
 import { PerformancesSection } from "@/components/PerformancesSection";
 import { MatrixSection } from "@/components/MatrixSection";
-import { TabId } from "@/components/Sidebar";
+import { TabId, DEFAULT_COVERAGE_ID } from "@/lib/constants";
 
 export default function Home() {
-  const { user, loading: authLoading } = useAuth();
+  const { currentMemberId, isReady, clearMember } = useCurrentMember();
   const [activeTab, setActiveTab] = useState<TabId>("master");
-  
+
   // Data hooks
-  const { members, addMember, deleteMember } = useMembers();
-  const { songs, addSong, deleteSong } = useSongs();
-  const { performances, addPerformance, deletePerformance, updatePerformance } = usePerformances();
-  
+  const { members, loading: membersLoading, error: membersError, addMember, deleteMember } = useMembers();
+  const { songs, loading: songsLoading, error: songsError, addSong, deleteSong } = useSongs();
+  const { performances, loading: perfLoading, error: perfError, addPerformance, deletePerformance, updatePerformance } = usePerformances();
+
   // Matrix specific state
   const [filterPerfId, setFilterPerfId] = useState("");
   const [filterSongId, setFilterSongId] = useState("");
 
-  const { assignments, assignMember, removeAssignment } = useAssignments(filterPerfId);
-  const { assignments: defaultAssignments } = useAssignments("default_coverage");
-  const { availability, allAvailability, loading: availabilityLoading, updateAvailability } = useAvailability(filterPerfId);
+  const { assignments, removeAssignment } = useAssignments(filterPerfId);
+  const { assignments: defaultAssignments } = useAssignments(DEFAULT_COVERAGE_ID);
+  const { availability, allAvailability, error: availError, updateAvailability } = useAvailability(filterPerfId);
 
-  // Even if auth is loading, we can show the app since we're allowing public access
-  // But we'll wait for hooks to avoid flicker if we want. 
-  // For now, let's keep it simple.
+  // The roster is public and fully editable by everyone by design — identity is
+  // only about knowing whose availability a tap should write.
+  const currentMember = members.find(m => m.id === currentMemberId) ?? null;
+
+  const dataError = membersError || perfError || availError || songsError;
+  const isLoading = membersLoading || perfLoading || songsLoading;
 
   const renderSection = () => {
     switch (activeTab) {
-      case "master":
-        return (
-          <HuddleMasterCommand 
-            members={members}
-            songs={songs}
-            performances={performances}
-            availability={availability}
-            updateAvailability={updateAvailability}
-            addMember={addMember}
-            addSong={addSong}
-            filterPerfId={filterPerfId}
-            setFilterPerfId={setFilterPerfId}
-            filterSongId={filterSongId}
-            setFilterSongId={setFilterSongId}
-            onTabChange={setActiveTab}
-            assignments={assignments}
-            defaultAssignments={defaultAssignments}
-            removeAssignment={removeAssignment}
-            allAvailability={allAvailability}
-            updatePerformance={updatePerformance}
-          />
-        );
       case "personnel":
         return <PersonnelSection members={members} addMember={addMember} deleteMember={deleteMember} />;
       case "repertoire":
         return <RepertoireSection songs={songs} members={members} addSong={addSong} deleteSong={deleteSong} />;
       case "performances":
         return (
-          <PerformancesSection 
-            performances={performances} 
-            songs={songs} 
-            members={members}
-            availabilityMap={availability}
-            addPerformance={addPerformance} 
+          <PerformancesSection
+            performances={performances}
+            songs={songs}
+            addPerformance={addPerformance}
             deletePerformance={deletePerformance}
             updatePerformance={updatePerformance}
-            updateAvailability={updateAvailability}
-            assignMember={assignMember}
           />
         );
       case "matrix":
@@ -95,50 +73,44 @@ export default function Home() {
             removeAssignment={removeAssignment}
           />
         );
+      // "master" and any unhandled tab both land on the dashboard.
       default:
         return (
-          <HuddleMasterCommand 
+          <HuddleMasterCommand
             members={members}
-            songs={songs}
             performances={performances}
-            availability={availability}
-            updateAvailability={updateAvailability}
-            addMember={addMember}
-            addSong={addSong}
-            filterPerfId={filterPerfId}
-            setFilterPerfId={setFilterPerfId}
-            filterSongId={filterSongId}
-            setFilterSongId={setFilterSongId}
-            onTabChange={setActiveTab}
-            assignments={assignments}
-            defaultAssignments={defaultAssignments}
-            removeAssignment={removeAssignment}
             allAvailability={allAvailability}
+            updateAvailability={updateAvailability}
+            onTabChange={setActiveTab}
             updatePerformance={updatePerformance}
+            currentMemberId={currentMemberId}
           />
         );
     }
   };
 
-  const userInitials = user?.displayName?.split(" ").map(n => n[0]).join("").toUpperCase() || "HP";
+  // Wait for localStorage before deciding, so returning users never see the picker.
+  if (!isReady) return null;
+
+  if (!currentMemberId || (!membersLoading && !currentMember)) {
+    return <IdentityGate members={members} loading={membersLoading} addMember={addMember} />;
+  }
 
   return (
-    <HuddleLayout 
-      activeTab={activeTab} 
-      onTabChange={setActiveTab} 
-      userInitials={userInitials}
+    <HuddleLayout
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      currentMemberName={currentMember?.name ?? null}
+      onSwitchMember={clearMember}
     >
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.02 }}
-          transition={{ duration: 0.2 }}
-        >
-          {renderSection()}
-        </motion.div>
-      </AnimatePresence>
+      <ConnectionBanner />
+      {dataError && <ErrorBanner message={dataError} />}
+      {/* Deliberately not wrapped in AnimatePresence: a JS-driven transition
+          here gates *all* content behind an animation completing, and each
+          section already has its own CSS entrance. */}
+      <div key={activeTab}>
+        {isLoading && !dataError ? <SectionSkeleton /> : renderSection()}
+      </div>
     </HuddleLayout>
   );
 }

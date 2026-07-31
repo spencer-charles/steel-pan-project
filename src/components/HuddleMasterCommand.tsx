@@ -2,75 +2,32 @@
 
 import React, { useState } from "react";
 import { Member } from "@/hooks/useMembers";
-import { Song } from "@/hooks/useSongs";
 import { Performance } from "@/hooks/usePerformances";
 import { AvailabilityStatus } from "@/hooks/useAvailability";
-import { INSTRUMENTS } from "@/lib/constants";
+import { TabId } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ToastProvider";
 
 interface HuddleMasterCommandProps {
   members: Member[];
-  songs: Song[];
   performances: Performance[];
-  availability: Record<string, AvailabilityStatus>;
   allAvailability?: Record<string, Record<string, AvailabilityStatus>>;
   updateAvailability: (memberId: string, status: AvailabilityStatus, perfId: string) => Promise<void>;
-  addMember: (member: Omit<Member, "id">) => Promise<void>;
-  addSong: (song: Omit<Song, "id">) => Promise<void>;
-  filterPerfId: string;
-  setFilterPerfId: (id: string) => void;
-  filterSongId: string;
-  setFilterSongId: (id: string) => void;
-  onTabChange: (tab: any) => void; // Using any to avoid Sidebar dependency for now
-  assignments: any[];
-  defaultAssignments: any[];
-  removeAssignment: (songId: string, instrument: string, memberId: string) => void;
+  onTabChange: (tab: TabId) => void;
   updatePerformance: (id: string, updates: Partial<Performance>) => Promise<void>;
+  currentMemberId: string | null;
 }
 
-export function HuddleMasterCommand({ 
-  members, 
-  songs, 
-  performances, 
-  availability,
+export function HuddleMasterCommand({
+  members,
+  performances,
   allAvailability = {},
   updateAvailability,
-  addMember,
-  addSong,
-  filterPerfId,
-  setFilterPerfId,
-  filterSongId,
-  setFilterSongId,
   onTabChange,
-  assignments,
-  defaultAssignments,
-  removeAssignment,
-  updatePerformance
+  updatePerformance,
+  currentMemberId
 }: HuddleMasterCommandProps) {
-  const { showToast } = useToast();
-  
-  const [quickAddMemberId, setQuickAddMemberId] = useState<Record<string, string>>({});
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
-  const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
-
-  // Close popup when clicking outside could be added, but a simple toggle works for now
-  
-  const handleQuickAvailability = async (memberId: string, perfId: string) => {
-    if (!memberId || !perfId) return;
-    try {
-      await updateAvailability(memberId, 'available', perfId);
-      showToast("Availability updated!", "success");
-      setQuickAddMemberId(prev => ({ ...prev, [perfId]: "" }));
-    } catch (error) {
-      showToast("Failed to update availability", "error");
-    }
-  };
-
-  const resetFilters = () => {
-    setFilterPerfId("");
-    setFilterSongId("");
-  };
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -78,7 +35,7 @@ export function HuddleMasterCommand({
       <section className="mt-4 mb-8">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-headline font-black tracking-tight text-on-surface">Dashboard</h1>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Management Overview</p>
+          <p className="text-xs text-on-surface-variant font-bold uppercase tracking-[0.2em]">Management Overview</p>
         </div>
       </section>
 
@@ -116,163 +73,27 @@ export function HuddleMasterCommand({
             <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>event_available</span>
             <h2 className="font-headline font-bold text-xl text-on-surface">Gig Availability</h2>
           </div>
-          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em]">Sign Up Sheet</p>
+          <p className="text-xs font-bold text-on-surface-variant uppercase tracking-[0.2em]">Sign Up Sheet</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {performances
             .filter(p => !p.isArchived)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-            .map(perf => {
-              // Parse date carefully to avoid timezone shifts
-              let day, month;
-              try {
-                const dateParts = perf.date.split('-');
-                if (dateParts.length === 3) {
-                  const y = parseInt(dateParts[0]);
-                  const m = parseInt(dateParts[1]) - 1;
-                  const d = parseInt(dateParts[2]);
-                  const dateObj = new Date(y, m, d);
-                  day = dateObj.getDate();
-                  month = dateObj.toLocaleString('default', { month: 'short' }).toUpperCase();
-                } else {
-                  const dateObj = new Date(perf.date);
-                  day = dateObj.getDate();
-                  month = dateObj.toLocaleString('default', { month: 'short' }).toUpperCase();
-                }
-              } catch (e) {
-                day = "??";
-                month = "ERR";
-              }
-              
-              const perfAvailability = allAvailability[perf.id] || {};
-              const availableMembers = members.filter(m => perfAvailability[m.id] === 'available');
-
-              return (
-                <div 
-                  key={perf.id} 
-                  className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm transition-all hover:shadow-md flex flex-col gap-5 relative group"
-                >
-                  {/* Archive Button */}
-                  <button 
-                    onClick={() => updatePerformance(perf.id, { isArchived: true })}
-                    className="absolute top-5 right-5 p-2 bg-slate-50 text-slate-400 rounded-full hover:text-amber-500 hover:bg-amber-50 transition-all z-10"
-                    title="Archive Gig"
-                  >
-                    <span className="material-symbols-outlined text-sm">archive</span>
-                  </button>
-
-                  {/* Calendar Widget */}
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-14 h-16 bg-blue-50 rounded-2xl flex flex-col items-center justify-center border border-blue-100">
-                      <span className="text-[10px] font-black text-blue-400 mb-0.5">{month}</span>
-                      <span className="text-xl font-black text-blue-700 leading-none">{day}</span>
-                    </div>
-                    <div className="min-w-0 pt-1 pr-8">
-                      <h3 className="font-bold text-slate-800 truncate leading-tight">{perf.title || "TBD Performance"}</h3>
-                      <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-sm">location_on</span>
-                        <span className="truncate">{perf.location || "Location TBD"}</span>
-                        {(perf.startTime || perf.endTime) && (
-                          <span className="flex items-center gap-1 ml-2 text-blue-500 font-medium">
-                            <span className="material-symbols-outlined text-[14px]">schedule</span>
-                            {perf.startTime}{perf.endTime ? ` - ${perf.endTime}` : ''}
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Available Personnel */}
-                  <div className="flex flex-col gap-2">
-                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Available Players</span>
-                    <div className="flex flex-wrap gap-x-3 gap-y-2 relative">
-                      {availableMembers.map(m => {
-                        const isEditing = editingPlayerId === `${perf.id}_${m.id}`;
-                        return (
-                          <div key={m.id} className="relative">
-                            <button 
-                              onClick={() => setEditingPlayerId(isEditing ? null : `${perf.id}_${m.id}`)}
-                              className="flex items-center gap-1.5 focus:outline-none hover:bg-slate-50 px-1 rounded transition-colors group/player"
-                            >
-                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 group-hover/player:bg-emerald-400 transition-colors"></div>
-                              <span className="text-xs font-bold text-slate-700 group-hover/player:text-slate-900 transition-colors">{m.name}</span>
-                            </button>
-                            
-                            {isEditing && (
-                              <>
-                                <div 
-                                  className="fixed inset-0 z-40" 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingPlayerId(null);
-                                  }}
-                                />
-                                <div className="absolute top-full left-0 mt-2 z-50 bg-white border border-slate-100 shadow-xl rounded-xl p-2 w-48 animate-in fade-in zoom-in-95 duration-100">
-                                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 pb-1 mb-1 border-b border-slate-50">Edit {m.name}</div>
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      updateAvailability(m.id, 'unavailable', perf.id);
-                                      setEditingPlayerId(null);
-                                      showToast(`${m.name} marked unavailable`, "info");
-                                    }}
-                                    className="w-full text-left px-2 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
-                                  >
-                                    <span className="material-symbols-outlined text-[14px]">person_off</span>
-                                    Mark Unavailable
-                                  </button>
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      updateAvailability(m.id, 'pending', perf.id);
-                                      setEditingPlayerId(null);
-                                      showToast(`${m.name} marked pending`, "info");
-                                    }}
-                                    className="w-full text-left px-2 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 rounded-lg transition-colors flex items-center gap-2"
-                                  >
-                                    <span className="material-symbols-outlined text-[14px]">help</span>
-                                    Mark Pending
-                                  </button>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        );
-                      })}
-                      {availableMembers.length === 0 && (
-                        <span className="text-[10px] font-medium text-slate-300 italic">No one signed up yet</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Quick Sign Up */}
-                  <div className="mt-auto pt-4 border-t border-slate-50">
-                    <div className="relative flex items-center gap-2">
-                      <select 
-                        value={quickAddMemberId[perf.id] || ""}
-                        onChange={(e) => handleQuickAvailability(e.target.value, perf.id)}
-                        className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 px-3 text-xs font-bold text-slate-600 appearance-none outline-none focus:ring-2 focus:ring-blue-100 transition-all hover:bg-slate-100"
-                      >
-                        <option value="">Sign up for this gig...</option>
-                        {members
-                          .filter(m => perfAvailability[m.id] !== 'available')
-                          .map(m => (
-                            <option key={m.id} value={m.id}>{m.name}</option>
-                          ))
-                        }
-                      </select>
-                      <div className="absolute right-3 pointer-events-none">
-                        <span className="material-symbols-outlined text-slate-300 text-sm">person_add</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
+            .map(perf => (
+              <GigCard
+                key={perf.id}
+                perf={perf}
+                members={members}
+                perfAvailability={allAvailability[perf.id] || {}}
+                currentMemberId={currentMemberId}
+                updateAvailability={updateAvailability}
+                updatePerformance={updatePerformance}
+              />
+            ))
           }
           {performances.filter(p => !p.isArchived).length === 0 && (
-            <div className="col-span-full py-12 flex flex-col items-center justify-center bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-100 text-slate-300">
+            <div className="col-span-full py-12 flex flex-col items-center justify-center bg-surface-container-low rounded-[2rem] border-2 border-dashed border-outline-variant/40 text-on-surface-variant">
               <span className="material-symbols-outlined text-4xl mb-2">calendar_today</span>
               <p className="font-bold text-sm">No upcoming gigs scheduled</p>
             </div>
@@ -284,14 +105,15 @@ export function HuddleMasterCommand({
       <section className="mb-32">
         <button 
           onClick={() => setIsArchiveOpen(!isArchiveOpen)}
-          className="flex items-center gap-2 group mb-6 px-1"
+          aria-expanded={isArchiveOpen}
+          className="flex items-center gap-2 min-h-12 mb-4 px-1"
         >
           <span className={cn(
-            "material-symbols-outlined text-slate-300 transition-transform duration-300",
+            "material-symbols-outlined text-on-surface-variant transition-transform duration-300",
             isArchiveOpen ? "rotate-180" : ""
           )}>expand_more</span>
-          <h2 className="font-headline font-bold text-xl text-slate-400">Archived Gigs</h2>
-          <span className="bg-slate-100 text-slate-400 text-[10px] font-black px-2 py-0.5 rounded-full">
+          <h2 className="font-headline font-bold text-xl text-on-surface-variant">Archived Gigs</h2>
+          <span className="bg-surface-container-high text-on-surface-variant text-xs font-black px-2 py-0.5 rounded-full">
             {performances.filter(p => p.isArchived).length}
           </span>
         </button>
@@ -301,34 +123,253 @@ export function HuddleMasterCommand({
             {performances
               .filter(p => p.isArchived)
               .map(perf => (
-                <div 
-                  key={perf.id} 
-                  className="bg-slate-50/50 border border-slate-100 rounded-[2rem] p-6 flex flex-col gap-4 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all group"
+                <div
+                  key={perf.id}
+                  className="bg-surface-container-low border border-outline-variant/20 rounded-[2rem] p-6 flex flex-col gap-4"
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <h3 className="font-bold text-slate-600 truncate">{perf.title}</h3>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{perf.date}</p>
+                      <h3 className="font-bold text-on-surface-variant truncate">{perf.title}</h3>
+                      <p className="text-xs font-bold text-outline uppercase tracking-widest mt-1">{perf.date}</p>
                     </div>
-                    <button 
+                    <button
                       onClick={() => updatePerformance(perf.id, { isArchived: false })}
-                      className="p-2 text-slate-300 hover:text-primary transition-colors"
+                      className="shrink-0 min-w-11 min-h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
                       title="Unarchive Gig"
                     >
-                      <span className="material-symbols-outlined text-sm">unarchive</span>
+                      <span className="material-symbols-outlined text-lg">unarchive</span>
                     </button>
                   </div>
                 </div>
               ))
             }
             {performances.filter(p => p.isArchived).length === 0 && (
-              <div className="col-span-full py-8 text-center text-slate-300 text-xs font-bold uppercase tracking-widest italic opacity-50">
+              <div className="col-span-full py-8 text-center text-on-surface-variant text-xs font-bold uppercase tracking-widest">
                 No archived gigs
               </div>
             )}
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+const STATUS_META: Record<AvailabilityStatus, { label: string; dot: string; pill: string }> = {
+  available: { label: "In", dot: "bg-emerald-600", pill: "bg-emerald-50 text-emerald-800 border-emerald-200" },
+  unavailable: { label: "Out", dot: "bg-red-600", pill: "bg-red-50 text-red-800 border-red-200" },
+  pending: { label: "Maybe", dot: "bg-amber-500", pill: "bg-amber-50 text-amber-800 border-amber-200" },
+};
+
+interface GigCardProps {
+  perf: Performance;
+  members: Member[];
+  perfAvailability: Record<string, AvailabilityStatus>;
+  currentMemberId: string | null;
+  updateAvailability: (memberId: string, status: AvailabilityStatus, perfId: string) => Promise<void>;
+  updatePerformance: (id: string, updates: Partial<Performance>) => Promise<void>;
+}
+
+function GigCard({
+  perf,
+  members,
+  perfAvailability,
+  currentMemberId,
+  updateAvailability,
+  updatePerformance,
+}: GigCardProps) {
+  const { showToast } = useToast();
+  const [isRosterOpen, setIsRosterOpen] = useState(false);
+  const [savingFor, setSavingFor] = useState<string | null>(null);
+
+  // Dates are stored as "YYYY-MM-DD"; split rather than parse so the day never
+  // shifts by a timezone offset.
+  const [y, m, d] = perf.date.split("-").map(Number);
+  const parsed = y && m && d ? new Date(y, m - 1, d) : null;
+  const day = parsed ? parsed.getDate() : "??";
+  const month = parsed ? parsed.toLocaleString("default", { month: "short" }).toUpperCase() : "—";
+
+  const myStatus = currentMemberId ? perfAvailability[currentMemberId] : undefined;
+  const responded = members.filter(mem => perfAvailability[mem.id]).length;
+  const inCount = members.filter(mem => perfAvailability[mem.id] === "available").length;
+
+  const setStatus = async (memberId: string, status: AvailabilityStatus, name: string) => {
+    setSavingFor(memberId);
+    try {
+      await updateAvailability(memberId, status, perf.id);
+      const isMe = memberId === currentMemberId;
+      showToast(
+        isMe ? `You're ${STATUS_META[status].label.toLowerCase()} for ${perf.title}` : `${name} marked ${STATUS_META[status].label.toLowerCase()}`,
+        "success"
+      );
+    } catch {
+      showToast("Couldn't save — check your connection and try again.", "error");
+    } finally {
+      setSavingFor(null);
+    }
+  };
+
+  const handleArchive = async () => {
+    try {
+      await updatePerformance(perf.id, { isArchived: true });
+      showToast(`${perf.title} archived`, "info");
+    } catch {
+      showToast("Couldn't archive that gig.", "error");
+    }
+  };
+
+  return (
+    <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-[2rem] p-5 shadow-sm flex flex-col gap-5">
+      {/* Header: date badge + title */}
+      <div className="flex items-start gap-4">
+        <div className="shrink-0 w-14 h-16 bg-primary-container rounded-2xl flex flex-col items-center justify-center">
+          <span className="text-[11px] font-black text-on-primary-container/70">{month}</span>
+          <span className="text-xl font-black text-on-primary-container leading-none">{day}</span>
+        </div>
+        <div className="min-w-0 flex-1 pt-1">
+          <h3 className="font-bold text-on-surface leading-tight break-words">{perf.title || "TBD Performance"}</h3>
+          <p className="text-sm text-on-surface-variant mt-1 flex items-center gap-1 min-w-0">
+            <span className="material-symbols-outlined text-base shrink-0">location_on</span>
+            <span className="truncate">{perf.location || "Location TBD"}</span>
+          </p>
+          {(perf.startTime || perf.endTime) && (
+            <p className="text-sm text-on-surface-variant mt-0.5 flex items-center gap-1">
+              <span className="material-symbols-outlined text-base shrink-0">schedule</span>
+              {perf.startTime}{perf.endTime ? ` – ${perf.endTime}` : ""}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Your answer — the primary action on this card */}
+      <div>
+        <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Your answer</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => currentMemberId && setStatus(currentMemberId, "available", "You")}
+            disabled={!currentMemberId || savingFor === currentMemberId}
+            aria-pressed={myStatus === "available"}
+            className={cn(
+              "h-12 rounded-xl text-base font-bold flex items-center justify-center gap-2 border-2 transition-all active:scale-[0.98] disabled:opacity-50",
+              myStatus === "available"
+                ? "bg-emerald-600 border-emerald-600 text-white"
+                : "bg-surface-container-low border-transparent text-on-surface-variant"
+            )}
+          >
+            <span className="material-symbols-outlined text-xl">check_circle</span>
+            I&apos;m In
+          </button>
+          <button
+            onClick={() => currentMemberId && setStatus(currentMemberId, "unavailable", "You")}
+            disabled={!currentMemberId || savingFor === currentMemberId}
+            aria-pressed={myStatus === "unavailable"}
+            className={cn(
+              "h-12 rounded-xl text-base font-bold flex items-center justify-center gap-2 border-2 transition-all active:scale-[0.98] disabled:opacity-50",
+              myStatus === "unavailable"
+                ? "bg-red-600 border-red-600 text-white"
+                : "bg-surface-container-low border-transparent text-on-surface-variant"
+            )}
+          >
+            <span className="material-symbols-outlined text-xl">cancel</span>
+            Can&apos;t Make It
+          </button>
+        </div>
+        <button
+          onClick={() => currentMemberId && setStatus(currentMemberId, "pending", "You")}
+          disabled={!currentMemberId || savingFor === currentMemberId}
+          aria-pressed={myStatus === "pending"}
+          className={cn(
+            "mt-2 w-full h-12 rounded-xl text-sm font-bold border-2 transition-all active:scale-[0.98] disabled:opacity-50",
+            myStatus === "pending"
+              ? "bg-amber-500 border-amber-500 text-white"
+              : "bg-transparent border-transparent text-on-surface-variant"
+          )}
+        >
+          Not sure yet
+        </button>
+        {!myStatus && (
+          <p className="mt-2 text-sm text-on-surface-variant text-center">You haven&apos;t answered yet.</p>
+        )}
+      </div>
+
+      {/* Response tracking + full roster */}
+      <div className="border-t border-outline-variant/20 pt-4">
+        <button
+          onClick={() => setIsRosterOpen(!isRosterOpen)}
+          aria-expanded={isRosterOpen}
+          className="w-full min-h-12 flex items-center justify-between gap-2 text-left"
+        >
+          <span className="text-sm font-bold text-on-surface">
+            {responded} of {members.length} answered
+            <span className="text-on-surface-variant font-medium"> · {inCount} in</span>
+          </span>
+          <span className={cn(
+            "material-symbols-outlined text-on-surface-variant transition-transform",
+            isRosterOpen && "rotate-180"
+          )}>expand_more</span>
+        </button>
+
+        <div className="mt-1 h-1.5 rounded-full bg-surface-container-high overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all"
+            style={{ width: members.length ? `${(responded / members.length) * 100}%` : "0%" }}
+          />
+        </div>
+
+        {isRosterOpen && (
+          <ul className="mt-3 space-y-1">
+            {members.map(mem => {
+              const status = perfAvailability[mem.id];
+              const meta = status ? STATUS_META[status] : null;
+              return (
+                <li
+                  key={mem.id}
+                  className="min-h-12 px-3 py-2 rounded-xl bg-surface-container-low flex items-center justify-between gap-3"
+                >
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className={cn("w-2.5 h-2.5 rounded-full shrink-0", meta ? meta.dot : "bg-outline/40")} />
+                    <span className="text-sm font-bold text-on-surface truncate">
+                      {mem.name}
+                      {mem.id === currentMemberId && <span className="text-on-surface-variant font-medium"> (you)</span>}
+                    </span>
+                  </span>
+                  {/* The pill is the control — anyone can correct anyone, the
+                      roster is shared on purpose. */}
+                  <div className="relative shrink-0">
+                    <select
+                      value={status ?? ""}
+                      onChange={e => setStatus(mem.id, e.target.value as AvailabilityStatus, mem.name)}
+                      disabled={savingFor === mem.id}
+                      aria-label={`Availability for ${mem.name}`}
+                      className={cn(
+                        "min-h-12 pl-3 pr-8 rounded-xl border text-base font-bold appearance-none outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50",
+                        meta ? meta.pill : "bg-transparent text-on-surface-variant border-outline-variant/40"
+                      )}
+                    >
+                      <option value="" disabled>No reply</option>
+                      <option value="available">In</option>
+                      <option value="unavailable">Out</option>
+                      <option value="pending">Maybe</option>
+                    </select>
+                    <span className="material-symbols-outlined absolute right-1.5 top-1/2 -translate-y-1/2 text-base pointer-events-none opacity-60">
+                      expand_more
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      {/* Archive lives at the bottom, in reach and out of mis-tap range */}
+      <button
+        onClick={handleArchive}
+        className="min-h-12 -mb-1 flex items-center justify-center gap-2 text-sm font-bold text-on-surface-variant rounded-xl hover:bg-surface-container-low transition-colors"
+      >
+        <span className="material-symbols-outlined text-lg">archive</span>
+        Archive gig
+      </button>
     </div>
   );
 }

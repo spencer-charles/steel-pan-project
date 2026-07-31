@@ -30,17 +30,28 @@ export interface Performance {
 export function usePerformances() {
   const [performances, setPerformances] = useState<Performance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, "performances"), orderBy("date", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Performance[];
-      setPerformances(docs);
-      setLoading(false);
-    });
+    // Ascending, so "next gig" is first everywhere it's rendered.
+    const q = query(collection(db, "performances"), orderBy("date", "asc"));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const docs = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Performance[];
+        setPerformances(docs);
+        setError(null);
+        setLoading(false);
+      },
+      (err) => {
+        console.error("performances listener failed:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, []);
@@ -63,5 +74,5 @@ export function usePerformances() {
     await deleteDoc(perfRef);
   };
 
-  return { performances, loading, addPerformance, updatePerformance, deletePerformance };
+  return { performances, loading, error, addPerformance, updatePerformance, deletePerformance };
 }

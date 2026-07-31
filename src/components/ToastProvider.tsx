@@ -1,7 +1,6 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -43,16 +42,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
-        <AnimatePresence>
+      {/* Sits above the bottom nav so it never covers navigation. */}
+      <div
+        className="fixed left-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none sm:left-auto sm:right-6 sm:w-96"
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 7rem)" }}
+      >
           {toasts.map((toast) => (
-            <motion.div
+            <div
               key={toast.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+              role={toast.type === "error" ? "alert" : "status"}
               className={cn(
-                "pointer-events-auto min-w-[300px] p-4 rounded-2xl shadow-2xl border flex items-center gap-4 bg-white/80 backdrop-blur-xl",
+                "toast-enter pointer-events-auto w-full max-w-full p-4 rounded-2xl shadow-2xl border flex items-center gap-3 bg-white/90 backdrop-blur-xl",
                 toast.type === "success" && "border-green-100 text-green-900",
                 toast.type === "error" && "border-red-100 text-red-900",
                 toast.type === "info" && "border-blue-100 text-blue-900"
@@ -68,16 +68,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 {toast.type === "error" && <AlertCircle className="w-5 h-5" />}
                 {toast.type === "info" && <Info className="w-5 h-5" />}
               </div>
-              <p className="text-sm font-bold flex-1">{toast.message}</p>
-              <button 
+              <p className="text-sm font-bold flex-1 min-w-0 break-words">{toast.message}</p>
+              <button
                 onClick={() => removeToast(toast.id)}
-                className="p-1 hover:bg-black/5 rounded-lg transition-colors"
+                aria-label="Dismiss"
+                className="shrink-0 min-w-11 min-h-11 flex items-center justify-center hover:bg-black/5 rounded-xl transition-colors"
               >
-                <X className="w-4 h-4 opacity-40" />
+                <X className="w-5 h-5 opacity-50" />
               </button>
-            </motion.div>
+            </div>
           ))}
-        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );

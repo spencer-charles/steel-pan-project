@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { 
-  collection, 
-  onSnapshot, 
-  query, 
-  where,
+  collection,
+  onSnapshot,
+  query,
   setDoc,
   doc,
   serverTimestamp
@@ -24,22 +23,32 @@ export interface Availability {
 export function useAvailability(performanceId?: string) {
   const [allAvailability, setAllAvailability] = useState<Record<string, Record<string, AvailabilityStatus>>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, "availability"));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data: Record<string, Record<string, AvailabilityStatus>> = {};
-      snapshot.docs.forEach((doc) => {
-        const avail = doc.data() as Availability;
-        if (!data[avail.performanceId]) {
-          data[avail.performanceId] = {};
-        }
-        data[avail.performanceId][avail.memberId] = avail.status;
-      });
-      setAllAvailability(data);
-      setLoading(false);
-    });
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data: Record<string, Record<string, AvailabilityStatus>> = {};
+        snapshot.docs.forEach((doc) => {
+          const avail = doc.data() as Availability;
+          if (!data[avail.performanceId]) {
+            data[avail.performanceId] = {};
+          }
+          data[avail.performanceId][avail.memberId] = avail.status;
+        });
+        setAllAvailability(data);
+        setError(null);
+        setLoading(false);
+      },
+      (err) => {
+        console.error("availability listener failed:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, []);
@@ -59,5 +68,5 @@ export function useAvailability(performanceId?: string) {
     });
   };
 
-  return { availability, allAvailability, loading, updateAvailability };
+  return { availability, allAvailability, loading, error, updateAvailability };
 }

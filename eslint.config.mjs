@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Committed Firebase Hosting build output — generated, not source.
+    ".firebase/**",
   ]),
 ]);
 

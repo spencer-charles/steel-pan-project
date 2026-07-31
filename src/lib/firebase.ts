@@ -1,6 +1,11 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -13,9 +18,27 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+const isFirstInit = getApps().length === 0;
+const app = isFirstInit ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
-const db = getFirestore(app);
+
+// IndexedDB persistence means a sign-up written on bad signal survives a refresh
+// and syncs later. initializeFirestore can only run once per app, and never on
+// the server, so fall back to the plain instance everywhere else.
+function createDb() {
+  if (typeof window === "undefined" || !isFirstInit) return getFirestore(app);
+  try {
+    return initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    });
+  } catch (err) {
+    // Storage unavailable (private mode, quota) — fall back to memory-only.
+    console.warn("Firestore persistence unavailable, using in-memory cache:", err);
+    return getFirestore(app);
+  }
+}
+
+const db = createDb();
 const storage = getStorage(app);
 
 export { app, auth, db, storage };

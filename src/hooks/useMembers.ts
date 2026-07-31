@@ -26,27 +26,39 @@ export interface Member {
 export function useMembers() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, "members"), orderBy("name"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Member[];
-      console.log("Fetched members:", docs);
-      setMembers(docs);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const docs = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Member[];
+        setMembers(docs);
+        setError(null);
+        setLoading(false);
+      },
+      // Without this the listener fails silently and the UI shows an empty
+      // roster forever.
+      (err) => {
+        console.error("members listener failed:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, []);
 
   const addMember = async (member: Omit<Member, "id">) => {
-    await addDoc(collection(db, "members"), {
+    const docRef = await addDoc(collection(db, "members"), {
       ...member,
       createdAt: serverTimestamp(),
     });
+    return docRef.id;
   };
 
   const updateMember = async (id: string, updates: Partial<Member>) => {
@@ -59,5 +71,5 @@ export function useMembers() {
     await deleteDoc(memberRef);
   };
 
-  return { members, loading, addMember, updateMember, deleteMember };
+  return { members, loading, error, addMember, updateMember, deleteMember };
 }

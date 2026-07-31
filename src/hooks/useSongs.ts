@@ -24,17 +24,27 @@ export interface Song {
 export function useSongs() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, "songs"), orderBy("title"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Song[];
-      setSongs(docs);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const docs = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Song[];
+        setSongs(docs);
+        setError(null);
+        setLoading(false);
+      },
+      (err) => {
+        console.error("songs listener failed:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, []);
@@ -56,5 +66,5 @@ export function useSongs() {
     await deleteDoc(songRef);
   };
 
-  return { songs, loading, addSong, updateSong, deleteSong };
+  return { songs, loading, error, addSong, updateSong, deleteSong };
 }
