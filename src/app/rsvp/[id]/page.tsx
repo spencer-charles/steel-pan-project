@@ -1,7 +1,8 @@
 "use client";
 
-import React, { use, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useCurrentMember } from "@/context/CurrentMemberContext";
 import { useMembers, Member } from "@/hooks/useMembers";
 import { usePerformances } from "@/hooks/usePerformances";
@@ -17,9 +18,13 @@ const STATUS_META: Record<AvailabilityStatus, { label: string; dot: string; pill
   pending: { label: "Maybe", dot: "bg-amber-500", pill: "bg-amber-50 text-amber-800 border-amber-200" },
 };
 
-export default function RsvpPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
-  const perfId = resolvedParams.id;
+export async function generateStaticParams() {
+  return [];
+}
+
+export default function RsvpPage() {
+  const params = useParams();
+  const perfId = (params?.id as string) || "";
 
   const { currentMemberId, selectMember, clearMember, isReady } = useCurrentMember();
   const { members, loading: membersLoading, error: membersError } = useMembers();
