@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Member } from "@/hooks/useMembers";
 import { Performance } from "@/hooks/usePerformances";
 import { AvailabilityStatus } from "@/hooks/useAvailability";
@@ -218,27 +219,67 @@ function GigCard({
     }
   };
 
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rsvpUrl = `${window.location.origin}/rsvp/${perf.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `RSVP: ${perf.title}`,
+          url: rsvpUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(rsvpUrl);
+        showToast("RSVP link copied to clipboard!", "success");
+      }
+    } catch {
+      try {
+        await navigator.clipboard.writeText(rsvpUrl);
+        showToast("RSVP link copied to clipboard!", "success");
+      } catch {
+        showToast("Could not copy link", "error");
+      }
+    }
+  };
+
   return (
     <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-[2rem] p-5 shadow-sm flex flex-col gap-5">
       {/* Header: date badge + title */}
-      <div className="flex items-start gap-4">
-        <div className="shrink-0 w-14 h-16 bg-primary-container rounded-2xl flex flex-col items-center justify-center">
-          <span className="text-[11px] font-black text-on-primary-container/70">{month}</span>
-          <span className="text-xl font-black text-on-primary-container leading-none">{day}</span>
-        </div>
-        <div className="min-w-0 flex-1 pt-1">
-          <h3 className="font-bold text-on-surface leading-tight break-words">{perf.title || "TBD Performance"}</h3>
-          <p className="text-sm text-on-surface-variant mt-1 flex items-center gap-1 min-w-0">
-            <span className="material-symbols-outlined text-base shrink-0">location_on</span>
-            <span className="truncate">{perf.location || "Location TBD"}</span>
-          </p>
-          {(perf.startTime || perf.endTime) && (
-            <p className="text-sm text-on-surface-variant mt-0.5 flex items-center gap-1">
-              <span className="material-symbols-outlined text-base shrink-0">schedule</span>
-              {perf.startTime}{perf.endTime ? ` – ${perf.endTime}` : ""}
+      <div className="flex items-start justify-between gap-3">
+        <Link 
+          href={`/rsvp/${perf.id}`}
+          className="flex items-start gap-4 min-w-0 flex-1 group"
+        >
+          <div className="shrink-0 w-14 h-16 bg-primary-container group-hover:bg-primary group-hover:text-on-primary transition-colors rounded-2xl flex flex-col items-center justify-center">
+            <span className="text-[11px] font-black text-on-primary-container/70 group-hover:text-on-primary/80">{month}</span>
+            <span className="text-xl font-black text-on-primary-container group-hover:text-on-primary leading-none">{day}</span>
+          </div>
+          <div className="min-w-0 flex-1 pt-1">
+            <h3 className="font-bold text-on-surface group-hover:text-primary transition-colors leading-tight break-words flex items-center gap-1">
+              <span>{perf.title || "TBD Performance"}</span>
+              <span className="material-symbols-outlined text-sm opacity-0 group-hover:opacity-100 transition-opacity">open_in_new</span>
+            </h3>
+            <p className="text-sm text-on-surface-variant mt-1 flex items-center gap-1 min-w-0">
+              <span className="material-symbols-outlined text-base shrink-0">location_on</span>
+              <span className="truncate">{perf.location || "Location TBD"}</span>
             </p>
-          )}
-        </div>
+            {(perf.startTime || perf.endTime) && (
+              <p className="text-sm text-on-surface-variant mt-0.5 flex items-center gap-1">
+                <span className="material-symbols-outlined text-base shrink-0">schedule</span>
+                {perf.startTime}{perf.endTime ? ` – ${perf.endTime}` : ""}
+              </p>
+            )}
+          </div>
+        </Link>
+        <button
+          onClick={handleShare}
+          className="shrink-0 min-w-11 min-h-11 flex items-center justify-center rounded-xl text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
+          title="Share RSVP Link"
+          aria-label="Share RSVP Link"
+        >
+          <span className="material-symbols-outlined text-xl">share</span>
+        </button>
       </div>
 
       {/* Your answer — the primary action on this card */}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Performance } from "@/hooks/usePerformances";
 import { Song } from "@/hooks/useSongs";
 
@@ -413,6 +414,31 @@ function PerformanceCard({
             </>
           ) : (
             <>
+              <button
+                onClick={async () => {
+                  const url = `${window.location.origin}/rsvp/${perf.id}`;
+                  try {
+                    if (navigator.share) {
+                      await navigator.share({ title: `RSVP: ${perf.title}`, url });
+                    } else {
+                      await navigator.clipboard.writeText(url);
+                      showToast("RSVP link copied to clipboard!", "success");
+                    }
+                  } catch {
+                    try {
+                      await navigator.clipboard.writeText(url);
+                      showToast("RSVP link copied to clipboard!", "success");
+                    } catch {
+                      showToast("Could not copy link", "error");
+                    }
+                  }
+                }}
+                aria-label="Share RSVP link"
+                title="Share RSVP link"
+                className="w-11 h-11 rounded-xl flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors"
+              >
+                <span className="material-symbols-outlined text-xl">share</span>
+              </button>
               <button
                 onClick={startEditing}
                 aria-label="Edit gig"
