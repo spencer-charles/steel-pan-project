@@ -416,7 +416,7 @@ function PerformanceCard({
             <>
               <button
                 onClick={async () => {
-                  const url = `${window.location.origin}/rsvp/${perf.id}`;
+                  const url = `${window.location.origin}/rsvp?id=${perf.id}`;
                   try {
                     if (navigator.share) {
                       await navigator.share({ title: `RSVP: ${perf.title}`, url });

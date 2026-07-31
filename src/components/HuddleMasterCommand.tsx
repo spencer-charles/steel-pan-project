@@ -222,7 +222,7 @@ function GigCard({
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const rsvpUrl = `${window.location.origin}/rsvp/${perf.id}`;
+    const rsvpUrl = `${window.location.origin}/rsvp?id=${perf.id}`;
     try {
       if (navigator.share) {
         await navigator.share({
@@ -248,7 +248,7 @@ function GigCard({
       {/* Header: date badge + title */}
       <div className="flex items-start justify-between gap-3">
         <Link 
-          href={`/rsvp/${perf.id}`}
+          href={`/rsvp?id=${perf.id}`}
           className="flex items-start gap-4 min-w-0 flex-1 group"
         >
           <div className="shrink-0 w-14 h-16 bg-primary-container group-hover:bg-primary group-hover:text-on-primary transition-colors rounded-2xl flex flex-col items-center justify-center">

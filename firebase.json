@@ -16,10 +16,15 @@
   },
   "hosting": {
     "source": ".",
+    "cleanUrls": true,
     "rewrites": [
       {
         "source": "/rsvp/**",
-        "destination": "/rsvp"
+        "destination": "/rsvp.html"
+      },
+      {
+        "source": "/rsvp",
+        "destination": "/rsvp.html"
       }
     ]
   }

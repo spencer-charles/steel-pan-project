@@ -48,18 +48,20 @@ export default function RsvpClient() {
 
   const handleShare = async () => {
     try {
+      const shareUrl = perf ? `${window.location.origin}/rsvp?id=${perf.id}` : window.location.href;
       if (navigator.share) {
         await navigator.share({
           title: perf ? `RSVP: ${perf.title}` : "Gig RSVP",
-          url: window.location.href,
+          url: shareUrl,
         });
       } else {
-        await navigator.clipboard.writeText(window.location.href);
+        await navigator.clipboard.writeText(shareUrl);
         showToast("RSVP link copied to clipboard!", "success");
       }
     } catch {
       try {
-        await navigator.clipboard.writeText(window.location.href);
+        const shareUrl = perf ? `${window.location.origin}/rsvp?id=${perf.id}` : window.location.href;
+        await navigator.clipboard.writeText(shareUrl);
         showToast("RSVP link copied to clipboard!", "success");
       } catch {
         showToast("Could not copy link", "error");
