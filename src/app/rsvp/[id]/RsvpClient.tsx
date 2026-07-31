@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useCurrentMember } from "@/context/CurrentMemberContext";
 import { useMembers } from "@/hooks/useMembers";
 import { usePerformances } from "@/hooks/usePerformances";
@@ -20,7 +20,16 @@ const STATUS_META: Record<AvailabilityStatus, { label: string; dot: string; pill
 
 export default function RsvpClient() {
   const params = useParams();
-  const perfId = (params?.id as string) || "";
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const perfIdFromParams = (params?.id as string) || "";
+  const perfIdFromQuery = searchParams?.get("id") || searchParams?.get("gig") || "";
+  const perfIdFromPath = pathname?.startsWith("/rsvp/")
+    ? pathname.replace("/rsvp/", "").split("/")[0]
+    : "";
+
+  const perfId = perfIdFromParams || perfIdFromQuery || perfIdFromPath || "";
 
   const { currentMemberId, selectMember, clearMember, isReady } = useCurrentMember();
   const { members, loading: membersLoading, error: membersError } = useMembers();

@@ -15,6 +15,12 @@
     }
   },
   "hosting": {
-    "source": "."
+    "source": ".",
+    "rewrites": [
+      {
+        "source": "/rsvp/**",
+        "destination": "/rsvp"
+      }
+    ]
   }
 }
