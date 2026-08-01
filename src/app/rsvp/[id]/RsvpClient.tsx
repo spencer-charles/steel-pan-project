@@ -124,7 +124,7 @@ export default function RsvpClient() {
       <ConnectionBanner />
       {dataError && <ErrorBanner message={dataError} />}
 
-      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl mx-auto py-4">
+      <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-3xl mx-auto py-4">
         {/* Navigation & Header */}
         <div className="flex items-center justify-between gap-3 mb-6">
           <Link
@@ -158,7 +158,7 @@ export default function RsvpClient() {
             </Link>
           </div>
         ) : (
-          <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-[2rem] p-6 shadow-md flex flex-col gap-6">
+          <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-[2rem] p-6 sm:p-8 shadow-md flex flex-col gap-6">
             {/* Gig Info */}
             <div className="flex items-start gap-4">
               <div className="shrink-0 w-16 h-20 bg-primary-container rounded-2xl flex flex-col items-center justify-center shadow-sm">
@@ -250,7 +250,7 @@ export default function RsvpClient() {
                   )}
                 >
                   <span className="material-symbols-outlined text-2xl">cancel</span>
-                  Can&apos;t Make It
+                  I&apos;m Out
                 </button>
               </div>
               <button

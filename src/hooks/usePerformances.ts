@@ -22,7 +22,7 @@ export interface Performance {
   endTime?: string;
   location: string;
   description?: string;
-  status: "pending" | "confirmed" | "cancelled" | "past";
+  status?: "pending" | "confirmed" | "cancelled" | "past";
   setlist: string[]; // Array of song IDs
   isArchived?: boolean;
 }

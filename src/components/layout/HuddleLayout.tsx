@@ -32,7 +32,7 @@ export function HuddleLayout({ children, activeTab, onTabChange, currentMemberNa
         )}
       </header>
 
-      <main className="pt-20 px-6 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl transition-all duration-300">
+      <main className="pt-20 px-4 sm:px-6 max-w-md mx-auto md:max-w-2xl lg:max-w-5xl xl:max-w-6xl transition-all duration-300">
         {children}
       </main>
 

@@ -379,14 +379,6 @@ function PerformanceCard({
           )}
 
           <div className="flex items-center gap-2 mt-1">
-            <span className={cn(
-              "text-xs font-bold px-2 py-0.5 rounded-lg border",
-              perf.status === "confirmed"
-                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                : "bg-amber-50 text-amber-800 border-amber-200"
-            )}>
-              {perf.status === "confirmed" ? "Confirmed" : "Tentative"}
-            </span>
             <p className="text-sm text-on-surface-variant font-semibold">
               {perf.setlist.length} {perf.setlist.length === 1 ? "song" : "songs"}
             </p>
@@ -490,20 +482,6 @@ function PerformanceCard({
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2 px-1">
                   <h5 className="text-sm font-bold uppercase tracking-wider text-on-surface-variant">Current Program</h5>
-                  <button
-                    onClick={async () => {
-                      const next = perf.status === "confirmed" ? "pending" : "confirmed";
-                      try {
-                        await onUpdate({ status: next });
-                        showToast(next === "confirmed" ? "Gig confirmed" : "Gig set to tentative");
-                      } catch {
-                        showToast("Couldn't update the status.", "error");
-                      }
-                    }}
-                    className="min-h-11 px-3 rounded-xl text-sm font-bold uppercase tracking-wider bg-surface-container-high text-on-surface transition-colors"
-                  >
-                    {perf.status === "confirmed" ? "Set Tentative" : "Set Confirmed"}
-                  </button>
                 </div>
 
                 <div className="space-y-1.5">

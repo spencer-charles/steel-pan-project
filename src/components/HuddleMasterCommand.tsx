@@ -77,7 +77,7 @@ export function HuddleMasterCommand({
           <p className="text-xs font-bold text-on-surface-variant uppercase tracking-[0.2em]">Sign Up Sheet</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {performances
             .filter(p => !p.isArchived)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -120,7 +120,7 @@ export function HuddleMasterCommand({
         </button>
 
         {isArchiveOpen && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in slide-in-from-top-4 duration-300">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in slide-in-from-top-4 duration-300">
             {performances
               .filter(p => p.isArchived)
               .map(perf => (
@@ -244,7 +244,7 @@ function GigCard({
   };
 
   return (
-    <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-[2rem] p-5 shadow-sm flex flex-col gap-5">
+    <div className="bg-surface-container-lowest border border-outline-variant/20 rounded-[2rem] p-5 sm:p-6 shadow-sm flex flex-col gap-5">
       {/* Header: date badge + title */}
       <div className="flex items-start justify-between gap-3">
         <Link 
@@ -312,7 +312,7 @@ function GigCard({
             )}
           >
             <span className="material-symbols-outlined text-xl">cancel</span>
-            Can&apos;t Make It
+            I&apos;m Out
           </button>
         </div>
         <button
